@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use priority_queue::PriorityQueue;
+
 use crate::{
     communication::{Event, EventDeliveryQueue, EventId, EventType},
     metrics::{self, Metrics},
@@ -31,15 +33,10 @@ impl Simulation {
         }
     }
 
-    pub(crate) fn submit_event_after(&mut self, event_type: EventType, after: Jiffies) {
-        let curr_proc = self.current_process.expect("No current process");
+    pub(crate) fn submit_event_after(&mut self, event_type: EventType, after: Jiffies) -> EventId {
+        let curr_proc = self.curr_process();
         let next_event_id = self.get_next_event_id();
         let will_arrive_at = after + self.global_time;
-        let queue_to_submit = &mut self
-            .procs
-            .get_mut(&curr_proc)
-            .expect("Invalid proccess id")
-            .1;
 
         match event_type {
             EventType::Timeout => {
@@ -56,7 +53,14 @@ impl Simulation {
             event_type,
         };
 
-        queue_to_submit.push(event, will_arrive_at);
+        self.devilery_queue_of(curr_proc)
+            .push(event, will_arrive_at);
+
+        next_event_id
+    }
+
+    pub(crate) fn cancel_event(&mut self, event: &Event) {
+        self.devilery_queue_of(self.curr_process()).remove(event);
     }
 
     pub(crate) fn add_processes(&mut self, procs: Vec<Box<dyn ProcessHandle>>) {
@@ -80,6 +84,26 @@ impl Simulation {
 }
 
 impl Simulation {
+    fn curr_process(&self) -> ProcessId {
+        self.current_process.expect("No current process")
+    }
+
+    fn devilery_queue_of(&mut self, process_id: ProcessId) -> &mut EventDeliveryQueue {
+        &mut self
+            .procs
+            .get_mut(&process_id)
+            .expect("Invalid proccess id")
+            .1
+    }
+
+    fn handle_of(&mut self, process_id: ProcessId) -> &mut Box<dyn ProcessHandle> {
+        &mut self
+            .procs
+            .get_mut(&process_id)
+            .expect("Invalid proccess id")
+            .0
+    }
+
     fn keep_running(&self) -> bool {
         self.global_time < self.max_steps
     }
@@ -112,11 +136,7 @@ impl Simulation {
     fn deliver_events(&mut self, events: Vec<(ProcessId, Event)>) {
         events.into_iter().for_each(|(target, event)| {
             self.current_process = Some(target);
-            self.procs
-                .get_mut(&target)
-                .expect("Process not found")
-                .0
-                .on_event(event);
+            self.handle_of(target).on_event(event);
         })
     }
 

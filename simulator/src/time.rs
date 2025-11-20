@@ -1,18 +1,29 @@
-use crate::simulation_handle::SIMULATION_HANDLE;
+use crate::{
+    communication::{Event, EventId, EventType},
+    simulation_handle::SIMULATION_HANDLE,
+};
 
 pub type Jiffies = usize;
 
-pub fn schedule_timeout(after: Jiffies) {
+/// Returns associated with this timeout EventId.
+/// This will allow process to cancel it calling reset_timeout.
+pub fn schedule_timeout(after: Jiffies) -> EventId {
     SIMULATION_HANDLE.with(|cell| {
         cell.borrow_mut()
             .as_mut()
-            .map(|sim| sim.submit_event_after(crate::communication::EventType::Timeout, after))
-            .or_else(|| panic!("Out of simulation context"))
-    });
+            .expect("Out of simulation context")
+            .submit_event_after(EventType::Timeout, after)
+    })
 }
 
-/// We assume that process schedules at most one global timeout.
-/// Maybe this behaviour will be generialized.
-pub fn reset_timeout() {
-    todo!()
+pub fn reset_timeout(timeout_id: EventId) {
+    SIMULATION_HANDLE.with(|cell| {
+        cell.borrow_mut()
+            .as_mut()
+            .expect("Out of simulation context")
+            .cancel_event(&Event {
+                id: timeout_id,
+                event_type: EventType::Timeout,
+            })
+    })
 }
