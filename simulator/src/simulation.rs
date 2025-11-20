@@ -1,7 +1,7 @@
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use crate::{
-    communication::{Event, EventDeliveryQueue},
+    communication::{Event, EventDeliveryQueue, EventId, EventType},
     metrics::{self, Metrics},
     process::{ProcessHandle, ProcessId},
     random::{self, Randomizer},
@@ -12,8 +12,10 @@ pub struct Simulation {
     randomizer: Randomizer,
     procs: HashMap<ProcessId, (Box<dyn ProcessHandle>, EventDeliveryQueue)>,
     metrics: Metrics,
+    current_process: Option<ProcessId>,
     global_time: Jiffies,
     max_steps: Jiffies,
+    next_event: EventId,
 }
 
 impl Simulation {
@@ -21,19 +23,40 @@ impl Simulation {
         Self {
             randomizer: Randomizer::new(seed),
             procs: HashMap::new(),
-            metrics: Metrics {},
+            metrics: Metrics::default(),
+            current_process: None,
             global_time: 0,
             max_steps: max_steps,
+            next_event: 0,
         }
     }
 
-    pub(crate) fn submit_event(&mut self, event: Event) {
-        match event {
-            Event::Timeout(after) => {}
-            Event::Message(message) => {
+    pub(crate) fn submit_event_after(&mut self, event_type: EventType, after: Jiffies) {
+        let curr_proc = self.current_process.expect("No current process");
+        let next_event_id = self.get_next_event_id();
+        let will_arrive_at = after + self.global_time;
+        let queue_to_submit = &mut self
+            .procs
+            .get_mut(&curr_proc)
+            .expect("Invalid proccess id")
+            .1;
+
+        match event_type {
+            EventType::Timeout => {
+                self.metrics.add_timeout(curr_proc);
+            }
+            EventType::Message(message) => {
+                self.metrics.add_event();
                 todo!()
             }
         }
+
+        let event = Event {
+            id: next_event_id,
+            event_type,
+        };
+
+        queue_to_submit.push(event, will_arrive_at);
     }
 
     pub(crate) fn add_processes(&mut self, procs: Vec<Box<dyn ProcessHandle>>) {
@@ -65,8 +88,14 @@ impl Simulation {
         self.global_time += 1;
     }
 
+    fn get_next_event_id(&mut self) -> EventId {
+        self.next_event += 1;
+        self.next_event
+    }
+
     fn initial_step(&mut self) {
-        self.procs.values_mut().for_each(|(process_handle, _)| {
+        self.procs.iter_mut().for_each(|(id, (process_handle, _))| {
+            self.current_process = Some(*id);
             process_handle.init();
         });
     }
@@ -82,6 +111,7 @@ impl Simulation {
 
     fn deliver_events(&mut self, events: Vec<(ProcessId, Event)>) {
         events.into_iter().for_each(|(target, event)| {
+            self.current_process = Some(target);
             self.procs
                 .get_mut(&target)
                 .expect("Process not found")
@@ -97,8 +127,8 @@ impl Simulation {
             .map(|(candidate, (_, candidate_queue))| {
                 (candidate, candidate_queue.pop().expect("Queue is empty"))
             })
-            .filter(|(_, (arrival_time, _))| *arrival_time == self.global_time)
-            .map(|(candidate, (_, event))| (candidate.clone(), event))
+            .filter(|(_, (_, arrival_time))| *arrival_time == self.global_time)
+            .map(|(candidate, (event, _))| (candidate.clone(), event))
             .collect()
     }
 }
