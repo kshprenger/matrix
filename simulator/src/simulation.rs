@@ -32,7 +32,7 @@ impl Simulation {
             procs: HashMap::new(),
             metrics: Metrics::default(),
             current_process: None,
-            global_time: 0,
+            global_time: Jiffies(0),
             max_steps: max_steps,
             next_event: 0,
         }
@@ -151,7 +151,7 @@ impl Simulation {
             produced_messages
                 .into_iter()
                 .for_each(|(destination, message)| {
-                    self.submit_event_after(EventType::Message(message), destination, 1);
+                    self.submit_event_after(EventType::Message(message), destination, Jiffies(1));
                 });
         })
     }

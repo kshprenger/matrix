@@ -14,6 +14,7 @@ impl NetworkController {
     }
 
     pub(crate) fn introduce_random_latency(&mut self) -> Jiffies {
-        self.randomizer.random_from_range(0, self.max_latency)
+        let random_time = self.randomizer.random_from_range(0, self.max_latency.0);
+        Jiffies(random_time)
     }
 }
