@@ -7,7 +7,6 @@ use crate::{
     network_condition::{BandwidthType, Latency, NetworkBoundedQueue},
     process::{ProcessHandle, ProcessId},
     random::{self, Randomizer},
-    simulation_result::SimulationResult,
     time::Jiffies,
 };
 
@@ -74,16 +73,16 @@ impl Simulation {
             .insert(id, (proc, NetworkBoundedQueue::new(bandwidth)));
     }
 
-    pub fn run(&mut self) -> SimulationResult {
+    pub fn run(&mut self) -> Metrics {
         self.initial_step();
 
         while self.keep_running() {
             if !self.step() {
-                return SimulationResult::Deadlock(self.metrics.execution_history.clone());
+                panic!("Deadlock")
             }
         }
 
-        SimulationResult::Ok(self.metrics.clone())
+        self.metrics.clone()
     }
 }
 
@@ -143,7 +142,7 @@ impl Simulation {
 
     fn execute_processes_steps(&mut self, steps: Vec<ProcessStep>) {
         steps.into_iter().for_each(|(source, event, target)| {
-            self.metrics.track_step((source, event.clone(), target));
+            self.metrics.track_event();
             let next_events = self.handle_of(target).on_event((source, event));
             self.submit_event_set(target, next_events);
         })

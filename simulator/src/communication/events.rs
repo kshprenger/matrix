@@ -7,13 +7,13 @@ use crate::{process::ProcessId, time::Jiffies};
 #[derive(Eq, PartialEq, Ord, PartialOrd, Hash, Clone)]
 pub enum Event {
     Timeout,
-    Message(Message),
+    Message(bytes::Bytes),
 }
 
 pub type EventBatch = HashSet<(Destination, Event)>;
 
 #[macro_export]
-macro_rules! events {
+macro_rules! event_set {
     [] => {
         std::collections::HashSet::new()
     };
@@ -32,7 +32,7 @@ impl Event {
     pub(crate) fn size(&self) -> usize {
         match self {
             Event::Timeout => 0,
-            Event::Message(msg) => msg.payload.len(),
+            Event::Message(msg) => msg.len(),
         }
     }
 }
@@ -41,11 +41,6 @@ impl Event {
 pub enum Destination {
     Broadcast,
     SendSelf,
-}
-
-#[derive(Eq, PartialEq, Ord, PartialOrd, Hash, Clone)]
-pub struct Message {
-    pub payload: bytes::Bytes,
 }
 
 /// ((ProcessId, Event), Jiffies) <=> At specified timestamp event will be delivered with source of ProcessId

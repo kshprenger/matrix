@@ -1,41 +1,15 @@
-use std::collections::HashMap;
-
-use crate::{
-    communication::Event,
-    history::{ExecutionHistory, ProcessStep},
-    process::ProcessId,
-};
+use crate::history::ProcessStep;
 
 #[derive(Clone, Default)]
-pub(crate) struct Metrics {
+pub struct Metrics {
     pub events_total: usize,
-    pub timeout_distribution: HashMap<ProcessId, usize>,
-    pub execution_history: ExecutionHistory,
 }
 
 impl Metrics {
-    pub(crate) fn track_step(&mut self, step: ProcessStep) {
-        self.track_event(step.0, &step.1);
-        self.execution_history.push(step);
-    }
-}
-
-impl Metrics {
-    fn track_timeout(&mut self, id: ProcessId) {
-        if let Some(count) = self.timeout_distribution.get_mut(&id) {
-            *count += 1;
-        } else {
-            self.timeout_distribution.insert(id, 1);
-        }
-    }
-
-    fn track_event(&mut self, id: ProcessId, event: &Event) {
+    pub(crate) fn track_event(&mut self) {
         self.events_total += 1;
-        match event {
-            Event::Timeout => {
-                self.track_timeout(id);
-            }
-            Event::Message(_) => {}
+        if self.events_total % 1_000_000 == 0 {
+            println!("Progress: {}", self.events_total)
         }
     }
 }

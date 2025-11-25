@@ -19,7 +19,7 @@ impl<F> SimulationBuilder<F>
 where
     F: Fn() -> Box<dyn ProcessHandle>,
 {
-    pub fn new_with_factory(f: F) -> SimulationBuilder<F> {
+    pub fn new_with_process_factory(f: F) -> SimulationBuilder<F> {
         SimulationBuilder {
             seed: 0,
             max_steps: Jiffies(1000),
@@ -50,7 +50,7 @@ where
         self
     }
 
-    pub fn with_bandwidth(mut self, bandwidth: BandwidthType) -> Self {
+    pub fn with_network_bandwidth(mut self, bandwidth: BandwidthType) -> Self {
         self.bandwidth = bandwidth;
         self
     }
