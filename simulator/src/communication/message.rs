@@ -6,7 +6,6 @@ pub trait Message: Eq + PartialEq + Ord + PartialOrd + Clone {
     fn virtual_size(&self) -> usize;
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum Destination {
     Broadcast,
     To(ProcessId),
