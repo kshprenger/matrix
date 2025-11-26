@@ -10,7 +10,7 @@ impl<M: Message> OutgoingMessages<M> {
 }
 
 /// User interface.
-/// Methods should be called from inside on_message handler.
+/// Methods should be called from inside of on_message handler.
 impl<M: Message> OutgoingMessages<M> {
     pub fn broadcast(&mut self, message: M) {
         self.0.push((Destination::Broadcast, message));

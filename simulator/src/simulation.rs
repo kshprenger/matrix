@@ -148,9 +148,8 @@ where
         steps.into_iter().for_each(|(source, message, target)| {
             self.metrics.track_event();
             let mut outgoing_messages = OutgoingMessages::new();
-            let produced_event_set =
-                self.handle_of(target)
-                    .on_message(source, message, &mut outgoing_messages);
+            self.handle_of(target)
+                .on_message(source, message, &mut outgoing_messages);
             self.submit_messages(target, outgoing_messages.0);
         })
     }
