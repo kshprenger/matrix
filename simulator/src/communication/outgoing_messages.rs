@@ -1,6 +1,7 @@
 use crate::{Destination, ProcessId, communication::Message};
 
-/// Injected into user's process's on_message handler
+/// Injected into user's process's on_message handler.
+/// This is common interface to process to allow it schedule some events.
 pub struct OutgoingMessages<M: Message>(pub(crate) Vec<(Destination, M)>);
 
 impl<M: Message> OutgoingMessages<M> {

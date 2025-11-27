@@ -20,7 +20,11 @@ impl ExampleProcess {
 }
 
 impl ProcessHandle<ExampleMessage> for ExampleProcess {
-    fn init(&mut self, outgoing: &mut simulator::OutgoingMessages<ExampleMessage>) {
+    fn bootstrap(
+        &mut self,
+        assigned_id: ProcessId,
+        outgoing: &mut simulator::OutgoingMessages<ExampleMessage>,
+    ) {
         outgoing.send_self(ExampleMessage {});
     }
 

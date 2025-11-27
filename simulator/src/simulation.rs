@@ -3,7 +3,6 @@ use std::{cmp::max, collections::HashMap};
 use crate::{
     OutgoingMessages,
     communication::{Destination, Message},
-    history::ProcessStep,
     metrics::Metrics,
     network_condition::{BandwidthType, Latency, NetworkBoundedMessageQueue},
     process::{ProcessHandle, ProcessId},
@@ -22,6 +21,8 @@ where
     global_time: Jiffies,
     max_steps: Jiffies,
 }
+
+pub(crate) type ProcessStep<M: Message> = (ProcessId, M, ProcessId);
 
 impl<P, M> Simulation<P, M>
 where
@@ -119,11 +120,7 @@ where
     fn initial_step(&mut self) {
         for id in self.procs.keys().copied().collect::<Vec<ProcessId>>() {
             let mut outgoing_messages = OutgoingMessages::new();
-            self.procs
-                .get_mut(&id)
-                .unwrap()
-                .0
-                .init(&mut outgoing_messages);
+            self.handle_of(id).bootstrap(id, &mut outgoing_messages);
             self.submit_messages(id, outgoing_messages.0);
         }
     }

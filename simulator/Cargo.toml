@@ -6,5 +6,7 @@ edition = "2024"
 [dependencies]
 rand = "0.9.2"
 
+
+# Enable 'cargo flamegraph'
 [profile.release]
 debug = true
