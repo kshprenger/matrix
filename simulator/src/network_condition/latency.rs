@@ -1,7 +1,7 @@
 use std::collections::BinaryHeap;
 
+use crate::Message;
 use crate::communication::{RoutedMessage, TimePriorityMessageQueue};
-use crate::{Message, ProcessId};
 use crate::{random::Randomizer, time::Jiffies};
 
 pub(crate) struct LatencyQueue<M: Message> {

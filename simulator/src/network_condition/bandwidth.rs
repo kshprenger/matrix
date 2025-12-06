@@ -23,7 +23,7 @@ pub(crate) struct BandwidthQueue<M: Message> {
     bandwidth: usize,
     global_queue: LatencyQueue<M>,
     current_buffers_sizes: Vec<usize>,
-    adjusted_queue: TimePriorityMessageQueue<M>,
+    merged_fifo_buffers: TimePriorityMessageQueue<M>,
 }
 
 impl<M: Message> BandwidthQueue<M> {
@@ -41,7 +41,7 @@ impl<M: Message> BandwidthQueue<M> {
             bandwidth,
             global_queue,
             current_buffers_sizes: vec![0; proc_num + 1],
-            adjusted_queue: BinaryHeap::new(),
+            merged_fifo_buffers: BinaryHeap::new(),
         }
     }
 
@@ -52,7 +52,7 @@ impl<M: Message> BandwidthQueue<M> {
 
     pub(crate) fn pop(&mut self) -> BandwidthQueueOptions<M> {
         let closest_arriving_message = self.global_queue.peek();
-        let closest_squizzing_message = self.adjusted_queue.peek();
+        let closest_squizzing_message = self.merged_fifo_buffers.peek();
 
         match (closest_arriving_message, closest_squizzing_message) {
             (None, None) => BandwidthQueueOptions::None,
@@ -77,12 +77,12 @@ impl<M: Message> BandwidthQueue<M> {
             .expect("Global queue should not be empty");
         self.current_buffers_sizes[message.1.0] += message.1.2.virtual_size();
         message.0 += Jiffies(self.current_buffers_sizes[message.1.0] / self.bandwidth);
-        self.adjusted_queue.push(std::cmp::Reverse(message));
+        self.merged_fifo_buffers.push(std::cmp::Reverse(message));
     }
 
     fn deliver_from_buffer(&mut self) -> BandwidthQueueOptions<M> {
         let message = self
-            .adjusted_queue
+            .merged_fifo_buffers
             .pop()
             .expect("All buffers should not be empty")
             .0;
