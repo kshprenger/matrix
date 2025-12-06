@@ -11,6 +11,12 @@ impl Add for Jiffies {
     }
 }
 
+impl AddAssign<Jiffies> for Jiffies {
+    fn add_assign(&mut self, rhs: Jiffies) {
+        self.0 += rhs.0
+    }
+}
+
 impl AddAssign<usize> for Jiffies {
     fn add_assign(&mut self, rhs: usize) {
         self.0 += rhs

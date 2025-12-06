@@ -43,7 +43,7 @@ where
         self
     }
 
-    pub fn with_max_steps(mut self, max_steps: Jiffies) -> Self {
+    pub fn with_max_simulation_time(mut self, max_steps: Jiffies) -> Self {
         self.max_steps = max_steps;
         self
     }
@@ -64,12 +64,14 @@ where
     }
 
     pub fn build(self) -> Simulation<P, M> {
-        let mut simulation = Simulation::new(self.seed, self.max_steps, self.max_network_latency);
-
-        (1..=self.process_count).for_each(|id| {
-            simulation.add_process(id, self.bandwidth, (self.factory)());
-        });
-
-        simulation
+        Simulation::new(
+            self.seed,
+            self.max_steps,
+            self.max_network_latency,
+            self.bandwidth,
+            (1..=self.process_count)
+                .map(|id| (id, (self.factory)()))
+                .collect(),
+        )
     }
 }

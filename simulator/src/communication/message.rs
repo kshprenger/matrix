@@ -12,6 +12,7 @@ pub enum Destination {
     SendSelf,
 }
 
-/// (Jiffies, ProcessId, Event) <=> At specified timestamp event will be delivered with source of ProcessId
-pub type TimePriorityMessageQueue<M> =
-    std::collections::BinaryHeap<Reverse<(Jiffies, (ProcessId, M))>>;
+// (Arrival time, source, dest, message)
+pub type RoutedMessage<M> = (Jiffies, (ProcessId, ProcessId, M));
+
+pub type TimePriorityMessageQueue<M> = std::collections::BinaryHeap<Reverse<RoutedMessage<M>>>;
