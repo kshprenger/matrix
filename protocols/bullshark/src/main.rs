@@ -1,5 +1,9 @@
 #![allow(non_snake_case)]
 
+mod dag;
+
+use std::rc::Rc;
+
 use simulator::*;
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
@@ -11,7 +15,11 @@ impl Message for BullsharkMessage {
     }
 }
 
-struct Bullshark {}
+struct Vertex {}
+
+struct Bullshark {
+    dag: Vec<Vec<Rc<Vertex>>>,
+}
 
 impl Bullshark {
     fn New() -> Self {
@@ -35,6 +43,12 @@ impl ProcessHandle<BullsharkMessage> for Bullshark {
         outgoing: &mut simulator::OutgoingMessages<BullsharkMessage>,
     ) {
         todo!();
+    }
+}
+
+impl Bullshark {
+    fn TryAdvanceRound(&mut self) {
+        todo!()
     }
 }
 
