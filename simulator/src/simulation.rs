@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, time::Instant};
 
-use log::debug;
+use log::{debug, error};
 
 use crate::{
     SimulationAccess,
@@ -88,7 +88,7 @@ where
             Destination::SendSelf => vec![source],
         };
 
-        debug!("Submitting message, targets of the message: {targets:?}");
+        debug!("Submitting message, targets of the message: {targets:?}",);
 
         targets.into_iter().for_each(|target| {
             let routed_message = RoutedMessage {
@@ -134,6 +134,7 @@ where
             BandwidthQueueOptions::MessageArrivedByLatency => true, // Do nothing
             BandwidthQueueOptions::Some(message) => {
                 self.FastForwardClock(message.arrival_time);
+                let start = Instant::now();
                 self.ExecuteProcessStep(message.step);
                 true
             }
@@ -155,9 +156,13 @@ where
 
         let mut access_messages = SimulationAccess::New();
 
-        debug!("Executing step for {} | Message Source: {}", dest, source);
+        debug!(
+            "Executing step for process {} | Message Source: {}",
+            dest, source
+        );
         self.HandleOf(dest)
             .OnMessage(source, message, &mut access_messages);
+
         self.SubmitMessages(dest, access_messages.0);
     }
 }

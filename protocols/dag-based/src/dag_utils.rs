@@ -17,6 +17,7 @@ pub struct Vertex {
 }
 
 pub struct RoundBasedDAG {
+    proc_num: usize,
     matrix: Vec<Round>,
     visited: Vec<Vec<bool>>, // Optimized allocations & constant lookup for iterated bfs
 }
@@ -26,22 +27,12 @@ impl RoundBasedDAG {
         Self {
             matrix: Vec::new(),
             visited: Vec::new(),
+            proc_num: 0,
         }
     }
 
-    pub fn Init(&mut self, n: usize) {
-        let genesis_vertices = (0..n)
-            .map(|_| Vertex {
-                round: 0,
-                source: 0,
-                strong_edges: Vec::new(),
-            })
-            .map(|v| Some(VertexPtr::new(v)))
-            .collect::<Round>();
-
-        self.matrix.push(genesis_vertices);
-        self.visited
-            .push((0..n).map(|_| false).collect::<Vec<bool>>());
+    pub fn SetRoundSize(&mut self, proc_num: usize) {
+        self.proc_num = proc_num;
     }
 
     // v & u should be already in the DAG
@@ -96,12 +87,11 @@ impl RoundBasedDAG {
 
 impl RoundBasedDAG {
     fn Grow(&mut self, rounds: usize) {
-        let n = self.matrix[0].len();
         (0..rounds).for_each(|_| {
             let mut round = Round::new();
-            round.resize(n, None);
+            round.resize(self.proc_num + 1, None);
             let mut round_visited = Vec::new();
-            round_visited.resize(n, false);
+            round_visited.resize(self.proc_num + 1, false);
 
             self.matrix.push(round);
             self.visited.push(round_visited);

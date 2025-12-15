@@ -1,7 +1,10 @@
 // https://arxiv.org/pdf/2201.05677
 // https://arxiv.org/pdf/2209.05633
 
-use std::collections::{HashSet, VecDeque};
+use std::{
+    collections::{HashSet, VecDeque},
+    time::Instant,
+};
 
 use simulator::*;
 
@@ -50,10 +53,15 @@ impl ProcessHandle<BullsharkMessage> for Bullshark {
         configuration: Configuration,
         access: &mut SimulationAccess<BullsharkMessage>,
     ) {
-        self.dag.Init(configuration.proc_num);
         self.self_id = configuration.assigned_id;
         self.proc_num = configuration.proc_num;
-        self.TryAdvanceRound(access);
+        self.dag.SetRoundSize(configuration.proc_num);
+        // Shared genesis vertices
+        access.Broadcast(BullsharkMessage::Vertex(VertexPtr::new(Vertex {
+            round: 0,
+            source: self.self_id,
+            strong_edges: Vec::new(),
+        })));
     }
 
     // DAG construction: part 1
@@ -65,6 +73,13 @@ impl ProcessHandle<BullsharkMessage> for Bullshark {
     ) {
         match message {
             BullsharkMessage::Vertex(v) => {
+                // Shared genesis vertices
+                if v.round == 0 {
+                    self.dag.AddVertex(v);
+                    self.TryAdvanceRound(access);
+                    return;
+                }
+
                 if v.strong_edges.len() < self.QuorumSize() || from != v.source {
                     return;
                 }
@@ -83,9 +98,7 @@ impl ProcessHandle<BullsharkMessage> for Bullshark {
                     return;
                 }
 
-                if self.QuorumReachedForRound(self.round) {
-                    self.TryAdvanceRound(access);
-                }
+                self.TryAdvanceRound(access);
             }
         }
     }
@@ -186,13 +199,9 @@ impl Bullshark {
             self.BroadcastVertex(v.round, access);
         }
 
-        debug_assert!(
-            self.buffer.remove(&v),
-            "Vertex should be in the buffer by that moment"
-        );
+        self.buffer.remove(&v);
 
         self.TryOrdering(v);
-
         return true;
     }
 }
@@ -200,8 +209,8 @@ impl Bullshark {
 // Consensus logic
 impl Bullshark {
     fn TryOrdering(&mut self, v: VertexPtr) {
-        // Leaders on odd rounds
-        if v.round % 2 == 0 {
+        // Leaders on even rounds
+        if v.round % 2 == 1 && v.round != 0 {
             return;
         }
 
