@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, ops::Index, ptr, rc::Rc};
+use std::{collections::VecDeque, ops::Index, rc::Rc};
 
 use simulator::ProcessId;
 
@@ -44,8 +44,8 @@ impl RoundBasedDAG {
             .push((0..n).map(|_| false).collect::<Vec<bool>>());
     }
 
-    // v & u already in the DAG
-    pub fn PathExists(&mut self, v: VertexPtr, u: VertexPtr) -> bool {
+    // v & u should be already in the DAG
+    pub fn PathExists(&mut self, v: &VertexPtr, u: &VertexPtr) -> bool {
         if SameVertex(&v, &u) {
             return true;
         }
@@ -54,7 +54,7 @@ impl RoundBasedDAG {
         self.visited[v.round][v.source] = true;
 
         let mut queue = VecDeque::new();
-        queue.push_back(&v);
+        queue.push_back(v);
 
         while queue.len() > 0 {
             let curr = queue.pop_front().unwrap();

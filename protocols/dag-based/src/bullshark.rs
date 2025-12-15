@@ -8,32 +8,38 @@ use simulator::*;
 use crate::dag_utils::{RoundBasedDAG, SameVertex, Vertex, VertexPtr};
 
 #[derive(Clone)]
-enum BullsharkMessage {
+pub enum BullsharkMessage {
     Vertex(VertexPtr),
 }
 
 impl Message for BullsharkMessage {
     fn VirtualSize(&self) -> usize {
-        todo!()
+        69
     }
 }
 
-struct Bullshark {
+pub struct Bullshark {
     self_id: ProcessId,
     proc_num: usize,
     dag: RoundBasedDAG,
     round: usize,
     buffer: HashSet<VertexPtr>,
+    ordered_vertices: HashSet<VertexPtr>,
+    last_ordered_round: usize,
+    ordered_anchors_stack: Vec<VertexPtr>,
 }
 
 impl Bullshark {
-    fn New() -> Self {
+    pub fn New() -> Self {
         Self {
             self_id: 0,
             proc_num: 0,
             dag: RoundBasedDAG::New(),
-            round: 1,
+            round: 0,
             buffer: HashSet::new(),
+            ordered_vertices: HashSet::new(),
+            last_ordered_round: 0,
+            ordered_anchors_stack: Vec::new(),
         }
     }
 }
@@ -42,12 +48,12 @@ impl ProcessHandle<BullsharkMessage> for Bullshark {
     fn Bootstrap(
         &mut self,
         configuration: Configuration,
-        outgoing: &mut OutgoingMessages<BullsharkMessage>,
+        access: &mut SimulationAccess<BullsharkMessage>,
     ) {
         self.dag.Init(configuration.proc_num);
         self.self_id = configuration.assigned_id;
         self.proc_num = configuration.proc_num;
-        self.TryAdvanceRound(outgoing);
+        self.TryAdvanceRound(access);
     }
 
     // DAG construction: part 1
@@ -55,7 +61,7 @@ impl ProcessHandle<BullsharkMessage> for Bullshark {
         &mut self,
         from: ProcessId,
         message: BullsharkMessage,
-        outgoing: &mut OutgoingMessages<BullsharkMessage>,
+        access: &mut SimulationAccess<BullsharkMessage>,
     ) {
         match message {
             BullsharkMessage::Vertex(v) => {
@@ -63,13 +69,13 @@ impl ProcessHandle<BullsharkMessage> for Bullshark {
                     return;
                 }
 
-                if !self.TryAddToDAG(v.clone(), outgoing) {
+                if !self.TryAddToDAG(v.clone(), access) {
                     self.buffer.insert(v.clone());
                 } else {
                     let vertices_in_the_buffer =
                         self.buffer.iter().cloned().collect::<Vec<VertexPtr>>();
                     vertices_in_the_buffer.into_iter().for_each(|v| {
-                        self.TryAddToDAG(v, outgoing);
+                        self.TryAddToDAG(v, access);
                     });
                 }
 
@@ -77,26 +83,8 @@ impl ProcessHandle<BullsharkMessage> for Bullshark {
                     return;
                 }
 
-                let w = v.round.div_ceil(4);
-
-                match v.round % 4 {
-                    1 => {
-                        if self.GetFirstPredefinedLeader(w) == v.source {
-                            self.TryAdvanceRound(outgoing);
-                        }
-                    }
-                    3 => {
-                        if self.GetSecondPredefinedLeader(w) == v.source {
-                            self.TryAdvanceRound(outgoing);
-                        }
-                    }
-                    0 => {
-                        todo!()
-                    }
-                    4 => {
-                        todo!()
-                    }
-                    _ => unreachable!(),
+                if self.QuorumReachedForRound(self.round) {
+                    self.TryAdvanceRound(access);
                 }
             }
         }
@@ -113,7 +101,16 @@ impl Bullshark {
         2 * self.AdversaryThreshold() + 1
     }
 
+    fn NonNoneVerticesCountForRound(&self, round: usize) -> usize {
+        self.dag[round].iter().flatten().count()
+    }
+
+    fn QuorumReachedForRound(&self, round: usize) -> bool {
+        self.NonNoneVerticesCountForRound(round) >= self.QuorumSize()
+    }
+
     fn CreateVertex(&self, round: usize) -> VertexPtr {
+        // Infinite source of client txns
         VertexPtr::new(Vertex {
             round,
             source: self.self_id,
@@ -138,27 +135,32 @@ impl Bullshark {
     fn GetLeaderId(&self, round: usize) -> ProcessId {
         return round % self.proc_num;
     }
+
+    fn GetAnchor(&self, round: usize) -> Option<VertexPtr> {
+        let leader = self.GetLeaderId(round);
+        self.dag[round][leader].clone()
+    }
 }
 
 // DAG construction: part 2
 impl Bullshark {
-    fn TryAdvanceRound(&mut self, outgoing: &mut OutgoingMessages<BullsharkMessage>) {
-        if self.dag[self.round].iter().flatten().count() >= self.QuorumSize() {
+    fn TryAdvanceRound(&mut self, access: &mut SimulationAccess<BullsharkMessage>) {
+        if self.QuorumReachedForRound(self.round) {
             self.round += 1;
-            self.BroadcastVertex(self.round, outgoing);
+            self.BroadcastVertex(self.round, access);
         }
     }
 
-    fn BroadcastVertex(&mut self, round: usize, outgoing: &mut OutgoingMessages<BullsharkMessage>) {
+    fn BroadcastVertex(&mut self, round: usize, access: &mut SimulationAccess<BullsharkMessage>) {
         let v = self.CreateVertex(round);
-        self.TryAddToDAG(v.clone(), outgoing);
-        outgoing.Broadcast(BullsharkMessage::Vertex(v));
+        self.TryAddToDAG(v.clone(), access);
+        access.Broadcast(BullsharkMessage::Vertex(v));
     }
 
     fn TryAddToDAG(
         &mut self,
         v: VertexPtr,
-        outgoing: &mut OutgoingMessages<BullsharkMessage>,
+        access: &mut SimulationAccess<BullsharkMessage>,
     ) -> bool {
         // Strong edges are not in the DAG yet
         if v.round - 1 > self.dag.CurrentMaxAllocatedRound() {
@@ -179,14 +181,12 @@ impl Bullshark {
 
         self.dag.AddVertex(v.clone());
 
-        if self.dag[self.round].iter().flatten().count() >= self.QuorumSize()
-            && v.round > self.round
-        {
+        if self.QuorumReachedForRound(v.round) && v.round > self.round {
             self.round = v.round;
-            self.BroadcastVertex(v.round, outgoing);
+            self.BroadcastVertex(v.round, access);
         }
 
-        assert!(
+        debug_assert!(
             self.buffer.remove(&v),
             "Vertex should be in the buffer by that moment"
         );
@@ -200,6 +200,78 @@ impl Bullshark {
 // Consensus logic
 impl Bullshark {
     fn TryOrdering(&mut self, v: VertexPtr) {
-        todo!()
+        // Leaders on odd rounds
+        if v.round % 2 == 0 {
+            return;
+        }
+
+        let maybe_anchor = self.GetAnchor(v.round - 2);
+
+        match maybe_anchor {
+            None => return,
+            Some(anchor) => {
+                let vote_count = anchor
+                    .strong_edges
+                    .iter()
+                    .filter(|vote| self.dag.PathExists(*vote, &anchor))
+                    .count();
+
+                if vote_count >= self.AdversaryThreshold() + 1 {
+                    self.OrderAnchors(anchor);
+                }
+            }
+        }
+    }
+
+    fn OrderAnchors(&mut self, v: VertexPtr) {
+        let mut anchor = v.clone();
+        self.ordered_anchors_stack.push(anchor.clone());
+        let mut r = anchor.round - 2;
+        while r > self.last_ordered_round {
+            let maybe_prev_anchor = self.GetAnchor(r);
+            match maybe_prev_anchor {
+                None => {
+                    r = r - 2; // Skip anchor and proceed to the next
+                    continue;
+                }
+                Some(prev_anchor) => {
+                    if self.dag.PathExists(&anchor, &prev_anchor) {
+                        self.ordered_anchors_stack.push(prev_anchor.clone());
+                        anchor = prev_anchor;
+                    }
+                    r = r - 2;
+                }
+            }
+        }
+        self.last_ordered_round = v.round;
+        self.OrderHistory();
+    }
+
+    fn OrderHistory(&mut self) {
+        while !self.ordered_anchors_stack.is_empty() {
+            let anchor = self
+                .ordered_anchors_stack
+                .pop()
+                .expect("Should not be empty");
+
+            let mut vertices_to_order = Vec::new();
+
+            // "in some deterministic order"
+            for round in 1..=self.dag.CurrentMaxAllocatedRound() {
+                for process in 1..=self.proc_num {
+                    let maybe_vertex = self.dag[round][process].clone();
+                    match maybe_vertex {
+                        None => continue,
+                        Some(vertex) => {
+                            if self.dag.PathExists(&anchor, &vertex)
+                                && !self.ordered_vertices.contains(&vertex)
+                            {
+                                vertices_to_order.push(vertex);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
