@@ -116,13 +116,13 @@ where
     fn InitialStep(&mut self) {
         for id in self.procs.keys().copied().collect::<Vec<ProcessId>>() {
             debug!("Executing initial step for {id}");
-            let mut access_messages = SimulationAccess::New();
+            let mut access_messages = SimulationAccess::New(self.global_time);
             let config = Configuration {
                 assigned_id: id,
                 proc_num: self.procs.keys().len(),
             };
             self.HandleOf(id).Bootstrap(config, &mut access_messages);
-            self.SubmitMessages(id, access_messages.0);
+            self.SubmitMessages(id, access_messages.scheduled_events);
         }
     }
 
@@ -153,7 +153,7 @@ where
         let dest = step.dest;
         let message = step.message;
 
-        let mut access_messages = SimulationAccess::New();
+        let mut access_messages = SimulationAccess::New(self.global_time);
 
         debug!(
             "Executing step for process {} | Message Source: {}",
@@ -162,6 +162,6 @@ where
         self.HandleOf(dest)
             .OnMessage(source, message, &mut access_messages);
 
-        self.SubmitMessages(dest, access_messages.0);
+        self.SubmitMessages(dest, access_messages.scheduled_events);
     }
 }
