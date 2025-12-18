@@ -108,7 +108,7 @@ where
                 self.dag_based_consensus.OnMessage(from, m, &mut bcb_access);
                 self.InitiateBroadcasts(bcb_access.scheduled_broadcasts, access)
             }
-            BCBMessage::Certificate(id) => {
+            BCBMessage::Certificate(_, id) => {
                 match self.messages.remove(&id) {
                     // Due to network latency we got certificate gathered by some quorum
                     None => {
@@ -142,7 +142,7 @@ where
                     Some(message_state) => {
                         message_state.1 += 1;
                         if message_state.1 >= self.QuorumSize() {
-                            access.Broadcast(BCBMessage::Certificate(id));
+                            access.Broadcast(BCBMessage::Certificate(self.QuorumSize(), id));
                         }
                     }
                 }

@@ -11,13 +11,21 @@ pub enum BCBMessage<M: Message> {
     // Broadcast
     Initiate((BCBMessageId, M)),
     Signature(BCBMessageId),
-    Certificate(BCBMessageId),
+    Certificate(usize, BCBMessageId),
     // Other
     Skip(M),
 }
 
+const ID_SIZE: usize = 128;
+const SIG_SIZE: usize = 64;
+
 impl<M: Message> Message for BCBMessage<M> {
     fn VirtualSize(&self) -> usize {
-        0
+        match self {
+            BCBMessage::Skip(m) => m.VirtualSize(),
+            BCBMessage::Initiate((_, m)) => ID_SIZE + m.VirtualSize(),
+            BCBMessage::Signature(_) => SIG_SIZE,
+            BCBMessage::Certificate(quorum_size, _) => quorum_size * SIG_SIZE,
+        }
     }
 }
