@@ -73,6 +73,17 @@ where
             access.Broadcast(BCBMessage::Initiate((next_id, message)));
         });
     }
+
+    fn WithInnerAccess<F, A>(&mut self, f: F, outer_access: &mut A)
+    where
+        M: Message,
+        A: Access<BCBMessage<M>>,
+        F: FnOnce(&mut Self, &mut BCBAccess<'_, M, A>),
+    {
+        let mut bcb_access = BCBAccess::Wrap(outer_access);
+        f(self, &mut bcb_access);
+        self.InitiateBroadcasts(bcb_access.scheduled_broadcasts, outer_access)
+    }
 }
 
 impl<M, H> ProcessHandle<BCBMessage<M>> for ByzantineConsistentBroadcast<M, H>
@@ -88,12 +99,12 @@ where
         self.process_id = configuration.assigned_id;
         self.proc_num = configuration.proc_num;
 
-        let mut bcb_access = BCBAccess::Wrap(access);
-
-        self.dag_based_consensus
-            .Bootstrap(configuration, &mut bcb_access);
-
-        self.InitiateBroadcasts(bcb_access.scheduled_broadcasts, access)
+        self.WithInnerAccess(
+            |bcb, bcb_access| {
+                bcb.dag_based_consensus.Bootstrap(configuration, bcb_access);
+            },
+            access,
+        );
     }
 
     fn OnMessage(
@@ -104,9 +115,12 @@ where
     ) {
         match message {
             BCBMessage::Skip(m) => {
-                let mut bcb_access = BCBAccess::Wrap(access);
-                self.dag_based_consensus.OnMessage(from, m, &mut bcb_access);
-                self.InitiateBroadcasts(bcb_access.scheduled_broadcasts, access)
+                self.WithInnerAccess(
+                    |bcb, bcb_access| {
+                        bcb.dag_based_consensus.OnMessage(from, m, bcb_access);
+                    },
+                    access,
+                );
             }
             BCBMessage::Certificate(_, id) => {
                 match self.messages.remove(&id) {
@@ -115,19 +129,24 @@ where
                         self.waiting_certificates.insert(id);
                     }
                     Some((message, _)) => {
-                        let mut bcb_access = BCBAccess::Wrap(access);
-                        self.dag_based_consensus
-                            .OnMessage(from, message, &mut bcb_access);
-                        self.InitiateBroadcasts(bcb_access.scheduled_broadcasts, access)
+                        self.WithInnerAccess(
+                            |bcb, bcb_access| {
+                                bcb.dag_based_consensus.OnMessage(from, message, bcb_access);
+                            },
+                            access,
+                        );
                     }
                 }
             }
             BCBMessage::Initiate((id, m)) => {
                 if id.process_id != self.process_id {
                     if self.waiting_certificates.contains(&id) {
-                        let mut bcb_access = BCBAccess::Wrap(access);
-                        self.dag_based_consensus.OnMessage(from, m, &mut bcb_access);
-                        self.InitiateBroadcasts(bcb_access.scheduled_broadcasts, access);
+                        self.WithInnerAccess(
+                            |bcb, bcb_access| {
+                                bcb.dag_based_consensus.OnMessage(from, m, bcb_access);
+                            },
+                            access,
+                        );
                         return;
                     }
                     self.messages.insert(id, (m, 0));
