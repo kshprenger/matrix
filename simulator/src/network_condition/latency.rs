@@ -2,16 +2,15 @@ use std::collections::BinaryHeap;
 
 use log::debug;
 
-use crate::Message;
 use crate::communication::{RoutedMessage, TimePriorityMessageQueue};
 use crate::{random::Randomizer, time::Jiffies};
 
-pub(crate) struct LatencyQueue<M: Message> {
+pub(crate) struct LatencyQueue {
     randomizer: Randomizer,
     max_latency: Jiffies,
-    queue: TimePriorityMessageQueue<M>,
+    queue: TimePriorityMessageQueue,
 }
-impl<M: Message> LatencyQueue<M> {
+impl LatencyQueue {
     pub(crate) fn New(randomizer: Randomizer, max_latency: Jiffies) -> Self {
         Self {
             randomizer,
@@ -20,7 +19,7 @@ impl<M: Message> LatencyQueue<M> {
         }
     }
 
-    pub(crate) fn Push(&mut self, mut message: RoutedMessage<M>) {
+    pub(crate) fn Push(&mut self, mut message: RoutedMessage) {
         debug!(
             "Arrival time before adding latency: {}",
             message.arrival_time
@@ -33,11 +32,11 @@ impl<M: Message> LatencyQueue<M> {
         self.queue.push(std::cmp::Reverse(message));
     }
 
-    pub(crate) fn Pop(&mut self) -> Option<RoutedMessage<M>> {
+    pub(crate) fn Pop(&mut self) -> Option<RoutedMessage> {
         Some(self.queue.pop()?.0)
     }
 
-    pub(crate) fn Peek(&mut self) -> Option<&RoutedMessage<M>> {
+    pub(crate) fn Peek(&mut self) -> Option<&RoutedMessage> {
         Some(&self.queue.peek()?.0)
     }
 }

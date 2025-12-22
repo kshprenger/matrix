@@ -1,33 +1,62 @@
-use std::cmp::Reverse;
+use std::{any::Any, cmp::Reverse, rc::Rc};
 
 use crate::{process::ProcessId, time::Jiffies};
 
-pub trait Message: Clone {
+pub trait Message: Any {
     fn VirtualSize(&self) -> usize;
 }
 
+pub struct MessagePtr(Rc<dyn Message>);
+
+impl MessagePtr {
+    pub fn New(m: Rc<dyn Message>) -> Self {
+        Self(m)
+    }
+
+    pub fn TryAs<T: 'static>(&self) -> Option<Rc<T>> {
+        match (self.0.clone() as Rc<dyn Any>).downcast::<T>() {
+            Err(_) => None,
+            Ok(m) => Some(m),
+        }
+    }
+
+    pub fn Is<T: 'static>(&self) -> bool {
+        (self.0.clone() as Rc<dyn Any>).is::<T>()
+    }
+
+    pub fn As<T: 'static>(self) -> Rc<T> {
+        (self.0 as Rc<dyn Any>).downcast::<T>().unwrap()
+    }
+}
+
+impl Message for MessagePtr {
+    fn VirtualSize(&self) -> usize {
+        self.0.VirtualSize()
+    }
+}
+
 #[derive(Clone)]
-pub struct ProcessStep<M> {
+pub struct ProcessStep {
     pub(crate) source: ProcessId,
     pub(crate) dest: ProcessId,
-    pub(crate) message: M,
+    pub(crate) message: Rc<dyn Message>,
 }
 
 #[derive(Clone)]
-pub struct RoutedMessage<M> {
+pub struct RoutedMessage {
     pub(crate) arrival_time: Jiffies,
-    pub(crate) step: ProcessStep<M>,
+    pub(crate) step: ProcessStep,
 }
 
-impl<M: Message> PartialEq for RoutedMessage<M> {
+impl PartialEq for RoutedMessage {
     fn eq(&self, other: &Self) -> bool {
         self.arrival_time.eq(&other.arrival_time)
     }
 }
 
-impl<M: Message> Eq for RoutedMessage<M> {}
+impl Eq for RoutedMessage {}
 
-impl<M: Message> PartialOrd for RoutedMessage<M> {
+impl PartialOrd for RoutedMessage {
     fn ge(&self, other: &Self) -> bool {
         self.arrival_time.ge(&other.arrival_time)
     }
@@ -45,10 +74,10 @@ impl<M: Message> PartialOrd for RoutedMessage<M> {
     }
 }
 
-impl<M: Message> Ord for RoutedMessage<M> {
+impl Ord for RoutedMessage {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.arrival_time.cmp(&other.arrival_time)
     }
 }
 
-pub type TimePriorityMessageQueue<M> = std::collections::BinaryHeap<Reverse<RoutedMessage<M>>>;
+pub type TimePriorityMessageQueue = std::collections::BinaryHeap<Reverse<RoutedMessage>>;

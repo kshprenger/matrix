@@ -26,33 +26,27 @@ impl ExampleProcess {
     }
 }
 
-impl ProcessHandle<ExampleMessage> for ExampleProcess {
-    fn Bootstrap(
-        &mut self,
-        configuration: Configuration,
-        access: &mut impl Access<ExampleMessage>,
-    ) {
+impl ProcessHandle for ExampleProcess {
+    fn Bootstrap(&mut self, configuration: Configuration) {
         self.self_id = configuration.assigned_id;
         if configuration.assigned_id == 1 {
-            access.SendTo(2, ExampleMessage::Ping);
+            SendTo(2, ExampleMessage::Ping);
         }
     }
 
-    fn OnMessage(
-        &mut self,
-        from: ProcessId,
-        message: ExampleMessage,
-        access: &mut impl Access<ExampleMessage>,
-    ) {
+    fn OnMessage(&mut self, from: ProcessId, message: MessagePtr) {
+        assert!(message.Is::<ExampleMessage>());
+        let m = message.As::<ExampleMessage>();
+
         if from == 1 && self.self_id == 2 {
-            assert!(message == ExampleMessage::Ping);
-            access.SendTo(1, ExampleMessage::Pong);
+            assert!(*m == ExampleMessage::Ping);
+            SendTo(1, ExampleMessage::Pong);
             return;
         }
 
         if from == 2 && self.self_id == 1 {
-            assert!(message == ExampleMessage::Pong);
-            access.SendTo(2, ExampleMessage::Ping);
+            assert!(*m == ExampleMessage::Pong);
+            SendTo(2, ExampleMessage::Ping);
             return;
         }
     }

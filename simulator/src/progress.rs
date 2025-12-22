@@ -15,7 +15,7 @@ impl Bar {
         let bar = ProgressBar::new(total.0 as u64);
         bar.set_style(
             ProgressStyle::default_bar()
-                .template("[{bar:100.cyan/blue}] {pos}/{len} Jiffies {msg}")
+                .template("[{bar:60.cyan/blue}] {pos}/{len} Jiffies {msg}")
                 .unwrap(),
         );
         match env::var("RUST_LOG") {

@@ -1,10 +1,10 @@
-use crate::{Access, Message, ProcessId, process::Configuration};
+use crate::{MessagePtr, ProcessId, process::Configuration};
 
-pub trait ProcessHandle<M: Message> {
+pub trait ProcessHandle {
     /// This methods provides initial configuration to the process.
     /// It is also requires process to schedule some initial messages.
-    fn Bootstrap(&mut self, configuration: Configuration, access: &mut impl Access<M>);
+    fn Bootstrap(&mut self, configuration: Configuration);
 
     /// Deliver message with source process
-    fn OnMessage(&mut self, from: ProcessId, message: M, access: &mut impl Access<M>);
+    fn OnMessage(&mut self, from: ProcessId, message: MessagePtr);
 }

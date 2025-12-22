@@ -3,7 +3,7 @@ use std::collections::BinaryHeap;
 use log::debug;
 
 use crate::{
-    communication::{Message, RoutedMessage, TimePriorityMessageQueue},
+    communication::{RoutedMessage, TimePriorityMessageQueue},
     network_condition::LatencyQueue,
     time::Jiffies,
 };
@@ -15,24 +15,24 @@ pub enum BandwidthType {
 }
 
 #[derive(Clone)]
-pub(crate) enum BandwidthQueueOptions<M: Message> {
+pub(crate) enum BandwidthQueueOptions {
     MessageArrivedByLatency,
     None,
-    Some(RoutedMessage<M>),
+    Some(RoutedMessage),
 }
 
-pub(crate) struct BandwidthQueue<M: Message> {
+pub(crate) struct BandwidthQueue {
     bandwidth: usize,
-    global_queue: LatencyQueue<M>,
+    global_queue: LatencyQueue,
     current_buffers_sizes: Vec<usize>,
-    merged_fifo_buffers: TimePriorityMessageQueue<M>,
+    merged_fifo_buffers: TimePriorityMessageQueue,
 }
 
-impl<M: Message> BandwidthQueue<M> {
+impl BandwidthQueue {
     pub(crate) fn New(
         bandwidth_type: BandwidthType,
         proc_num: usize,
-        global_queue: LatencyQueue<M>,
+        global_queue: LatencyQueue,
     ) -> Self {
         let bandwidth = match bandwidth_type {
             BandwidthType::Unbounded => usize::MAX,
@@ -47,12 +47,12 @@ impl<M: Message> BandwidthQueue<M> {
         }
     }
 
-    pub(crate) fn Push(&mut self, message: RoutedMessage<M>) {
+    pub(crate) fn Push(&mut self, message: RoutedMessage) {
         debug!("Submitted message with base time: {}", message.arrival_time);
         self.global_queue.Push(message);
     }
 
-    pub(crate) fn Pop(&mut self) -> BandwidthQueueOptions<M> {
+    pub(crate) fn Pop(&mut self) -> BandwidthQueueOptions {
         let closest_arriving_message = self.global_queue.Peek();
         let closest_squeezing_message = self.merged_fifo_buffers.peek();
 
@@ -71,7 +71,7 @@ impl<M: Message> BandwidthQueue<M> {
     }
 }
 
-impl<M: Message> BandwidthQueue<M> {
+impl BandwidthQueue {
     fn MoveMessageFromLatencyQueueToBuffers(&mut self) {
         debug!("Moving message from latency queue to buffers");
         let mut message = self
@@ -96,7 +96,7 @@ impl<M: Message> BandwidthQueue<M> {
         self.merged_fifo_buffers.push(std::cmp::Reverse(message));
     }
 
-    fn DeliverFromBuffer(&mut self) -> BandwidthQueueOptions<M> {
+    fn DeliverFromBuffer(&mut self) -> BandwidthQueueOptions {
         let message = self
             .merged_fifo_buffers
             .pop()
@@ -110,7 +110,7 @@ impl<M: Message> BandwidthQueue<M> {
         BandwidthQueueOptions::Some(message)
     }
 
-    fn DeliverFromLatencyQueue(&mut self) -> BandwidthQueueOptions<M> {
+    fn DeliverFromLatencyQueue(&mut self) -> BandwidthQueueOptions {
         self.MoveMessageFromLatencyQueueToBuffers();
         BandwidthQueueOptions::MessageArrivedByLatency
     }

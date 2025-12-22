@@ -1,9 +1,10 @@
-use std::{collections::BTreeMap, process::exit};
+use std::{collections::BTreeMap, process::exit, rc::Rc};
 
 use log::{debug, info};
 
 use crate::{
-    access::CoreAccess,
+    Access, MessagePtr,
+    access::{DrainMessages, SetupAccess},
     communication::{Destination, Message, ProcessStep, RoutedMessage},
     metrics::Metrics,
     network_condition::{BandwidthQueue, BandwidthQueueOptions, BandwidthType, LatencyQueue},
@@ -13,12 +14,11 @@ use crate::{
     time::Jiffies,
 };
 
-pub struct Simulation<P, M>
+pub struct Simulation<P>
 where
-    P: ProcessHandle<M>,
-    M: Message,
+    P: ProcessHandle,
 {
-    bandwidth_queue: BandwidthQueue<M>,
+    bandwidth_queue: BandwidthQueue,
     procs: BTreeMap<ProcessId, P>,
     metrics: Metrics,
     global_time: Jiffies,
@@ -28,10 +28,9 @@ where
 
 const K_PROGRESS_TIMES: usize = 10;
 
-impl<P, M> Simulation<P, M>
+impl<P> Simulation<P>
 where
-    P: ProcessHandle<M>,
-    M: Message,
+    P: ProcessHandle,
 {
     pub(crate) fn New(
         seed: random::Seed,
@@ -65,17 +64,19 @@ where
                 exit(1)
             }
         }
+
+        self.progress_bar.MakeProgress(self.max_time);
+
         info!("Looks good! ヽ(‘ー`)ノ");
         self.metrics.clone()
     }
 }
 
-impl<P, M> Simulation<P, M>
+impl<P> Simulation<P>
 where
-    P: ProcessHandle<M>,
-    M: Message,
+    P: ProcessHandle,
 {
-    fn SubmitMessages(&mut self, source: ProcessId, messages: Vec<(Destination, M)>) {
+    fn SubmitMessages(&mut self, source: ProcessId, messages: Vec<(Destination, Rc<dyn Message>)>) {
         messages.into_iter().for_each(|(destination, event)| {
             self.SubmitSingleMessage(event, source, destination, self.global_time + Jiffies(1));
         });
@@ -83,7 +84,7 @@ where
 
     fn SubmitSingleMessage(
         &mut self,
-        message: M,
+        message: Rc<dyn Message>,
         source: ProcessId,
         destination: Destination,
         base_arrival_time: Jiffies,
@@ -122,13 +123,13 @@ where
     fn InitialStep(&mut self) {
         for id in self.procs.keys().copied().collect::<Vec<ProcessId>>() {
             debug!("Executing initial step for {id}");
-            let mut access_messages = CoreAccess::New(self.global_time);
             let config = Configuration {
                 assigned_id: id,
                 proc_num: self.procs.keys().len(),
             };
-            self.HandleOf(id).Bootstrap(config, &mut access_messages);
-            self.SubmitMessages(id, access_messages.scheduled_events);
+            SetupAccess(Access::New(self.global_time));
+            self.HandleOf(id).Bootstrap(config);
+            self.SubmitMessages(id, DrainMessages());
         }
     }
 
@@ -153,22 +154,21 @@ where
         debug!("Global time now: {time}");
     }
 
-    fn ExecuteProcessStep(&mut self, step: ProcessStep<M>) {
+    fn ExecuteProcessStep(&mut self, step: ProcessStep) {
         self.metrics.TrackEvent();
 
         let source = step.source;
         let dest = step.dest;
         let message = step.message;
 
-        let mut access_messages = CoreAccess::New(self.global_time);
-
         debug!(
             "Executing step for process {} | Message Source: {}",
             dest, source
         );
-        self.HandleOf(dest)
-            .OnMessage(source, message, &mut access_messages);
 
-        self.SubmitMessages(dest, access_messages.scheduled_events);
+        SetupAccess(Access::New(self.global_time));
+        self.HandleOf(dest)
+            .OnMessage(source, MessagePtr::New(message));
+        self.SubmitMessages(dest, DrainMessages());
     }
 }

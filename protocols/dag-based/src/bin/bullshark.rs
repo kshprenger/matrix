@@ -1,17 +1,13 @@
-use dag_based::{bullshark::Bullshark, consistent_broadcast::ByzantineConsistentBroadcast};
+use dag_based::bullshark::Bullshark;
 use simulator::{BandwidthType, Jiffies, SimulationBuilder};
 fn main() {
-    for procs in (4..1000).step_by(10) {
-        let mut sim = SimulationBuilder::NewFromFactory(|| {
-            ByzantineConsistentBroadcast::Wrap(Bullshark::New())
-        })
-        .MaxLatency(Jiffies(133))
-        .MaxTime(Jiffies(23440))
+    let mut sim = SimulationBuilder::NewFromFactory(|| Bullshark::New())
+        .MaxLatency(Jiffies(500))
+        .MaxTime(Jiffies(100000))
         .NetworkBandwidth(BandwidthType::Unbounded)
-        .ProcessInstances(procs)
-        .Seed(procs as u64)
+        .ProcessInstances(60)
+        .Seed(234565432345)
         .Build();
-        let metrics = sim.Run();
-        println!("{}, {}", procs, metrics.events_total)
-    }
+
+    let _ = sim.Run();
 }

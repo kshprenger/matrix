@@ -5,7 +5,10 @@ use std::collections::BTreeSet;
 
 use simulator::*;
 
-use crate::dag_utils::{RoundBasedDAG, SameVertex, Vertex, VertexPtr};
+use crate::{
+    consistent_broadcast::{BCBMessage, ByzantineConsistentBroadcast},
+    dag_utils::{RoundBasedDAG, SameVertex, Vertex, VertexPtr},
+};
 
 #[derive(Clone)]
 pub enum BullsharkMessage {
@@ -20,6 +23,7 @@ impl Message for BullsharkMessage {
 }
 
 pub struct Bullshark {
+    rbcast: ByzantineConsistentBroadcast,
     self_id: ProcessId,
     proc_num: usize,
     dag: RoundBasedDAG,
@@ -32,6 +36,7 @@ pub struct Bullshark {
 impl Bullshark {
     pub fn New() -> Self {
         Self {
+            rbcast: ByzantineConsistentBroadcast::New(),
             self_id: 0,
             proc_num: 0,
             dag: RoundBasedDAG::New(),
@@ -43,55 +48,52 @@ impl Bullshark {
     }
 }
 
-impl ProcessHandle<BullsharkMessage> for Bullshark {
-    fn Bootstrap(
-        &mut self,
-        configuration: Configuration,
-        access: &mut impl Access<BullsharkMessage>,
-    ) {
+impl ProcessHandle for Bullshark {
+    fn Bootstrap(&mut self, configuration: Configuration) {
         self.self_id = configuration.assigned_id;
         self.proc_num = configuration.proc_num;
         self.dag.SetRoundSize(configuration.proc_num);
+        self.rbcast.Bootstrap(configuration);
+
         // Shared genesis vertices
         let genesis_vertex = VertexPtr::new(Vertex {
             round: 0,
             source: self.self_id,
             strong_edges: Vec::new(),
         });
-        access.Broadcast(BullsharkMessage::Genesis(genesis_vertex));
+
+        self.rbcast
+            .ReliablyBroadcast(BullsharkMessage::Genesis(genesis_vertex));
     }
 
     // DAG construction: part 1
-    fn OnMessage(
-        &mut self,
-        from: ProcessId,
-        message: BullsharkMessage,
-        access: &mut impl Access<BullsharkMessage>,
-    ) {
-        match message {
-            BullsharkMessage::Genesis(v) => {
-                debug_assert!(v.round == 0);
-                self.dag.AddVertex(v);
-                self.TryAdvanceRound(access);
-                return;
-            }
-
-            BullsharkMessage::Vertex(v) => {
-                if v.strong_edges.len() < self.QuorumSize() || from != v.source {
+    fn OnMessage(&mut self, from: ProcessId, message: MessagePtr) {
+        if let Some(bs_message) = self.rbcast.Process(from, message.As::<BCBMessage>()) {
+            match bs_message.As::<BullsharkMessage>().as_ref() {
+                BullsharkMessage::Genesis(v) => {
+                    debug_assert!(v.round == 0);
+                    self.dag.AddVertex(v.clone());
+                    self.TryAdvanceRound();
                     return;
                 }
 
-                let vertices_in_the_buffer =
-                    self.buffer.iter().cloned().collect::<Vec<VertexPtr>>();
-                vertices_in_the_buffer.into_iter().for_each(|v| {
-                    self.TryAddToDAG(v, access);
-                });
+                BullsharkMessage::Vertex(v) => {
+                    if v.strong_edges.len() < self.QuorumSize() || from != v.source {
+                        return;
+                    }
 
-                if !self.TryAddToDAG(v.clone(), access) {
-                    self.buffer.insert(v.clone());
+                    let vertices_in_the_buffer =
+                        self.buffer.iter().cloned().collect::<Vec<VertexPtr>>();
+                    vertices_in_the_buffer.into_iter().for_each(|v| {
+                        self.TryAddToDAG(v);
+                    });
+
+                    if !self.TryAddToDAG(v.clone()) {
+                        self.buffer.insert(v.clone());
+                    }
+
+                    self.TryAdvanceRound();
                 }
-
-                self.TryAdvanceRound(access);
             }
         }
     }
@@ -152,20 +154,20 @@ impl Bullshark {
 
 // DAG construction: part 2
 impl Bullshark {
-    fn TryAdvanceRound(&mut self, access: &mut impl Access<BullsharkMessage>) {
+    fn TryAdvanceRound(&mut self) {
         if self.QuorumReachedForRound(self.round) {
             self.round += 1;
-            self.BroadcastVertex(self.round, access);
+            self.BroadcastVertex(self.round);
         }
     }
 
-    fn BroadcastVertex(&mut self, round: usize, access: &mut impl Access<BullsharkMessage>) {
+    fn BroadcastVertex(&mut self, round: usize) {
         let v = self.CreateVertex(round);
-        self.TryAddToDAG(v.clone(), access);
-        access.Broadcast(BullsharkMessage::Vertex(v));
+        self.TryAddToDAG(v.clone());
+        self.rbcast.ReliablyBroadcast(BullsharkMessage::Vertex(v));
     }
 
-    fn TryAddToDAG(&mut self, v: VertexPtr, access: &mut impl Access<BullsharkMessage>) -> bool {
+    fn TryAddToDAG(&mut self, v: VertexPtr) -> bool {
         // Strong edges are not in the DAG yet
         if v.round - 1 > self.dag.CurrentMaxAllocatedRound() {
             return false;
@@ -187,7 +189,7 @@ impl Bullshark {
 
         if self.QuorumReachedForRound(v.round) && v.round > self.round {
             self.round = v.round;
-            self.BroadcastVertex(v.round, access);
+            self.BroadcastVertex(v.round);
         }
 
         self.buffer.remove(&v);
