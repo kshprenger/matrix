@@ -3,12 +3,11 @@ use std::process::exit;
 use log::{error, info};
 
 use crate::{
-    Now,
     network::{BandwidthType, Network},
     process::{ProcessHandle, ProcessId},
     progress::Bar,
     random::{self},
-    time::Jiffies,
+    time::{Jiffies, Now},
 };
 
 pub struct Simulation<P>

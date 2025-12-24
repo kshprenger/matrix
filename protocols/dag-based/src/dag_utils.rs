@@ -1,6 +1,9 @@
 use std::{collections::VecDeque, ops::Index, rc::Rc};
 
-use simulator::ProcessId;
+use simulator::{
+    ProcessId, metrics,
+    time::{Jiffies, Now},
+};
 
 pub type VertexPtr = Rc<Vertex>;
 type Round = Vec<Option<VertexPtr>>;
@@ -13,6 +16,7 @@ pub fn SameVertex(v: &VertexPtr, u: &VertexPtr) -> bool {
 pub struct Vertex {
     pub round: usize,
     pub source: ProcessId,
+    pub creation_time: Jiffies,
     pub strong_edges: Vec<VertexPtr>,
 }
 
@@ -68,6 +72,9 @@ impl RoundBasedDAG {
                     continue;
                 } else {
                     self.ordered[edge.round][edge.source] = true;
+                    metrics::Modify::<Vec<Jiffies>, _>("latency", |l| {
+                        l.push(Now() - edge.creation_time);
+                    });
                 }
             }
         }

@@ -60,6 +60,7 @@ impl ProcessHandle for Bullshark {
             round: 0,
             source: self.self_id,
             strong_edges: Vec::new(),
+            creation_time: time::Now(),
         });
 
         self.rbcast
@@ -130,6 +131,7 @@ impl Bullshark {
                 .flatten() // Remove option
                 .cloned()
                 .collect::<Vec<VertexPtr>>(),
+            creation_time: time::Now(),
         })
     }
 

@@ -1,7 +1,7 @@
 use std::{
     cell::Cell,
-    fmt::Display,
-    ops::{Add, AddAssign, Mul},
+    fmt::{Debug, Display},
+    ops::{Add, AddAssign, Mul, Sub},
 };
 
 use log::debug;
@@ -14,6 +14,14 @@ impl Add for Jiffies {
 
     fn add(self, rhs: Self) -> Self::Output {
         Jiffies(self.0 + rhs.0)
+    }
+}
+
+impl Sub for Jiffies {
+    type Output = Jiffies;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Jiffies(self.0 - rhs.0)
     }
 }
 
@@ -40,6 +48,12 @@ impl Mul<Jiffies> for usize {
 impl Display for Jiffies {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(("Jiffies(".to_string() + &self.0.to_string() + ")").as_str())
+    }
+}
+
+impl Debug for Jiffies {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0.to_string())
     }
 }
 

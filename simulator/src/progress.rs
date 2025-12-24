@@ -2,7 +2,7 @@ use std::env;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::Jiffies;
+use crate::time::Jiffies;
 
 pub(crate) struct Bar {
     bar: ProgressBar,

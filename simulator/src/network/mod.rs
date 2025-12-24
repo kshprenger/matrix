@@ -17,7 +17,6 @@ use log::debug;
 
 use crate::Configuration;
 use crate::Destination;
-use crate::Jiffies;
 use crate::Message;
 use crate::MessagePtr;
 use crate::ProcessHandle;
@@ -29,6 +28,7 @@ use crate::network::access::DrainMessages;
 use crate::random::Randomizer;
 use crate::random::Seed;
 use crate::time::FastForwardClock;
+use crate::time::Jiffies;
 use crate::time::Now;
 
 pub(crate) struct Network<P: ProcessHandle> {
