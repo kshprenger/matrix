@@ -21,10 +21,7 @@ pub fn Get<T: 'static + Clone>(key: &str) -> Option<T> {
     })
 }
 
-pub fn Modify<T: 'static, F>(key: &str, f: F)
-where
-    F: FnOnce(&mut T),
-{
+pub fn Modify<T: 'static>(key: &str, f: impl FnOnce(&mut T)) {
     METRICS.with(|m| {
         if let Some(value) = m.borrow_mut().get_mut(key) {
             if let Some(typed_value) = value.downcast_mut::<T>() {

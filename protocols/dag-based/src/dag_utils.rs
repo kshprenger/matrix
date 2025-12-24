@@ -72,7 +72,7 @@ impl RoundBasedDAG {
                     continue;
                 } else {
                     self.ordered[edge.round][edge.source] = true;
-                    metrics::Modify::<Vec<Jiffies>, _>("latency", |l| {
+                    metrics::Modify::<Vec<Jiffies>>("latency", |l| {
                         l.push(Now() - edge.creation_time);
                     });
                 }

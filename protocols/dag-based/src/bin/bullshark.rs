@@ -1,5 +1,6 @@
 use dag_based::bullshark::Bullshark;
 use simulator::{BandwidthType, SimulationBuilder, metrics, time::Jiffies};
+
 fn main() {
     metrics::Clear();
     metrics::Set::<Vec<Jiffies>>("latency", Vec::new());
