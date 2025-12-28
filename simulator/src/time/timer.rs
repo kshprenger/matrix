@@ -1,4 +1,9 @@
-use std::collections::{BinaryHeap, HashMap};
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+};
+
+use log::debug;
 
 use crate::{
     ProcessId, access,
@@ -16,7 +21,7 @@ pub(crate) fn NextTimerId() -> TimerId {
 
 // We cannot cancel timers yet. So user tracks them using TimerId
 pub(crate) struct Timers {
-    working_timers: BinaryHeap<(Jiffies, (ProcessId, TimerId))>,
+    working_timers: BinaryHeap<Reverse<(Jiffies, (ProcessId, TimerId))>>,
     procs: HashMap<ProcessId, SharedProcessHandle>,
 }
 
@@ -33,8 +38,9 @@ impl Timers {
             .drain(..)
             .into_iter()
             .for_each(|(source, timer_id, after)| {
+                debug!("submitted timer to fire at {}", Now() + after);
                 self.working_timers
-                    .push((Now() + after, (source, timer_id)));
+                    .push(Reverse((Now() + after, (source, timer_id))));
             });
     }
 }
@@ -45,12 +51,13 @@ impl SimulationActor for Timers {
     }
 
     fn PeekClosest(&self) -> Option<Jiffies> {
-        self.working_timers.peek().map(|(after, (_, _))| *after)
+        self.working_timers.peek().map(|entry| entry.0.0)
     }
 
     fn Step(&mut self) {
-        let (_, (process_id, timer_id)) = self.working_timers.pop().expect("Should not be empty");
+        let (_, (process_id, timer_id)) = self.working_timers.pop().expect("Should not be empty").0;
         access::SetProcess(process_id);
+        debug!("Firing timer with TimerId {timer_id} for Process {process_id}");
         self.procs
             .get_mut(&process_id)
             .expect("Invalid ProcessId")
