@@ -65,6 +65,10 @@ impl SimulationAccess {
     fn SetProcess(&mut self, id: ProcessId) {
         self.process_on_execution = id
     }
+
+    fn CurrentId(&self) -> ProcessId {
+        self.process_on_execution
+    }
 }
 
 // Any actor make step -> Buffering outcoming events -> Then we drain it to all actors
@@ -102,4 +106,16 @@ pub fn Broadcast(message: impl Message + 'static) {
 
 pub fn SendTo(to: ProcessId, message: impl Message + 'static) {
     WithAccess(|access| access.SendTo(to, message));
+}
+
+pub fn CurrentId() -> ProcessId {
+    WithAccess(|access| access.CurrentId())
+}
+
+// Userspace debugger
+#[macro_export]
+macro_rules! Debug {
+    ($($arg:tt)+) => {
+        log::debug!("[Process {}] {}", CurrentId(), format_args!($($arg)+));
+    }
 }

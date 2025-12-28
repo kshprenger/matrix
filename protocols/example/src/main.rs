@@ -47,12 +47,14 @@ impl ProcessHandle for ExampleProcess {
 
         if from == 1 && self.self_id == 2 {
             assert!(*m == ExampleMessage::Ping);
+            Debug!("Sending Pong");
             SendTo(1, ExampleMessage::Pong);
             return;
         }
 
         if from == 2 && self.self_id == 1 {
             assert!(*m == ExampleMessage::Pong);
+            Debug!("Sending Ping");
             SendTo(2, ExampleMessage::Ping);
             return;
         }

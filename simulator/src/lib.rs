@@ -24,6 +24,7 @@ pub use simulation::Simulation;
 pub use simulation_builder::SimulationBuilder;
 
 pub use access::Broadcast;
+pub use access::CurrentId;
 pub use access::ScheduleTimerAfter;
 pub use access::SendTo;
 
