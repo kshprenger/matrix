@@ -54,7 +54,7 @@ impl Bullshark {
 
 impl ProcessHandle for Bullshark {
     fn Bootstrap(&mut self, configuration: Configuration) {
-        self.self_id = configuration.assigned_id;
+        self.self_id = CurrentId();
         self.proc_num = configuration.proc_num;
         self.dag.SetRoundSize(configuration.proc_num);
         self.rbcast.Bootstrap(configuration);
@@ -128,9 +128,7 @@ impl ProcessHandle for Bullshark {
                                 if self.GetAnchor(self.round - 1).is_none() {
                                     return;
                                 }
-                                if CurrentId() == 1 {
-                                    Debug!("HI")
-                                }
+
                                 if self.dag[self.round]
                                     .iter()
                                     .flatten()

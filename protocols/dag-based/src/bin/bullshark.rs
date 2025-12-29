@@ -10,13 +10,13 @@ fn main() {
         .MaxLatency(Jiffies(100))
         .MaxTime(Jiffies(1000))
         .NICBandwidth(BandwidthType::Unbounded)
-        .ProcessInstances(500) // 500 * 100 = 5k
+        .ProcessInstances(50)
         .Seed(234565432345)
         .Build()
         .Run();
 
     println!(
-        "Vertices orderd: {}",
+        "Vertices ordered: {}",
         metrics::Get::<Vec<Jiffies>>("latency").unwrap().len()
     );
     println!(

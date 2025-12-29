@@ -6,7 +6,7 @@ use std::{
     rc::Rc,
 };
 
-use simulator::{Broadcast, Configuration, Message, MessagePtr, ProcessId, SendTo};
+use simulator::{Broadcast, Configuration, CurrentId, Message, MessagePtr, ProcessId, SendTo};
 
 use crate::consistent_broadcast::message::BCBMessageId;
 
@@ -62,7 +62,7 @@ impl ByzantineConsistentBroadcast {
     }
 
     pub(crate) fn Bootstrap(&mut self, configuration: Configuration) {
-        self.process_id = configuration.assigned_id;
+        self.process_id = CurrentId();
         self.proc_num = configuration.proc_num;
     }
 
