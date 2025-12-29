@@ -6,10 +6,10 @@ fn main() {
     metrics::Set::<usize>("timeouts-fired", 0);
 
     SimulationBuilder::NewFromFactory(|| Box::new(Bullshark::New()))
-        .MaxLatency(Jiffies(100))
-        .MaxTime(Jiffies(1000))
+        .MaxLatency(Jiffies(50))
+        .MaxTime(Jiffies(10000))
         .NICBandwidth(BandwidthType::Unbounded)
-        .ProcessInstances(1000)
+        .ProcessInstances(100)
         .Seed(234565432345)
         .Build()
         .Run();

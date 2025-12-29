@@ -87,7 +87,7 @@ impl ProcessHandle for Bullshark {
                     Debug!("Got vertex from: {from}");
 
                     // Validity check
-                    if v.strong_edges.len() < self.QuorumSize() || from != v.source {
+                    if self.BadVertex(&v, from) {
                         return;
                     }
 
@@ -212,6 +212,10 @@ impl Bullshark {
                 .collect::<Vec<VertexPtr>>(),
             creation_time: time::Now(),
         })
+    }
+
+    fn BadVertex(&self, v: &VertexPtr, from: ProcessId) -> bool {
+        v.strong_edges.len() < self.QuorumSize() || from != v.source
     }
 
     fn GetLeaderId(&self, round: usize) -> ProcessId {

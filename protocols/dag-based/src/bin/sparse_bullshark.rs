@@ -5,11 +5,11 @@ fn main() {
     metrics::Set::<Vec<Jiffies>>("latency", Vec::new());
     metrics::Set::<usize>("timeouts-fired", 0);
 
-    SimulationBuilder::NewFromFactory(|| Box::new(SparseBullshark::New(200)))
-        .MaxLatency(Jiffies(0))
-        .MaxTime(Jiffies(1000))
+    SimulationBuilder::NewFromFactory(|| Box::new(SparseBullshark::New(20)))
+        .MaxLatency(Jiffies(20))
+        .MaxTime(Jiffies(6000))
         .NICBandwidth(BandwidthType::Unbounded)
-        .ProcessInstances(1000)
+        .ProcessInstances(100)
         .Seed(234565432345)
         .Build()
         .Run();

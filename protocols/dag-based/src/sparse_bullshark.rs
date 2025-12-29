@@ -59,7 +59,9 @@ impl SparseBullshark {
 impl ProcessHandle for SparseBullshark {
     fn Bootstrap(&mut self, configuration: Configuration) {
         self.proc_num = configuration.proc_num;
-        self.sampler = Some(StdRng::seed_from_u64(configuration.seed));
+        self.sampler = Some(StdRng::seed_from_u64(
+            configuration.seed + CurrentId() as u64,
+        ));
         self.dag.SetRoundSize(configuration.proc_num);
         self.rbcast.Bootstrap(configuration);
 
@@ -80,7 +82,6 @@ impl ProcessHandle for SparseBullshark {
         if let Some(bs_message) = self.rbcast.Process(from, message.As::<BCBMessage>()) {
             match bs_message.As::<SparseBullsharkMessage>().as_ref() {
                 SparseBullsharkMessage::Genesis(v) => {
-                    Debug!("Got genesis");
                     debug_assert!(v.round == 0);
                     self.dag.AddVertex(v.clone());
                     self.TryAdvanceRound();
@@ -88,11 +89,7 @@ impl ProcessHandle for SparseBullshark {
                 }
 
                 SparseBullsharkMessage::Vertex(v) => {
-                    Debug!("Got vertex from: {from}");
-                    debug_assert!(v.strong_edges.len() <= self.D + 2);
-
-                    // Validity check
-                    if v.strong_edges.len() < self.QuorumSize() || from != v.source {
+                    if self.BadVertex(v, from) {
                         return;
                     }
 
@@ -175,7 +172,6 @@ impl ProcessHandle for SparseBullshark {
 
     fn OnTimer(&mut self, id: TimerId) {
         if id == self.current_timer {
-            Debug!("Timer fired: {}", id);
             metrics::Modify::<usize>("timeouts-fired", |count| *count += 1);
             self.wait = false;
             self.TryAdvanceRound();
@@ -247,6 +243,10 @@ impl SparseBullshark {
         })
     }
 
+    fn BadVertex(&self, v: &VertexPtr, from: ProcessId) -> bool {
+        v.strong_edges.len() > self.D + 2 || from != v.source
+    }
+
     fn GetLeaderId(&self, round: usize) -> ProcessId {
         return round % self.proc_num + 1;
     }
@@ -258,7 +258,6 @@ impl SparseBullshark {
 
     fn StartTimer(&mut self) {
         self.current_timer = ScheduleTimerAfter(Jiffies(200));
-        Debug!("New timer scheduled: {}", self.current_timer);
         self.wait = true;
     }
 }
@@ -267,7 +266,6 @@ impl SparseBullshark {
 impl SparseBullshark {
     fn TryAdvanceRound(&mut self) {
         if self.QuorumReachedForRound(self.round) {
-            Debug!("Advancing to {} round", self.round + 1);
             self.round += 1;
             self.StartTimer();
             self.BroadcastVertex(self.round);
@@ -334,6 +332,17 @@ impl SparseBullshark {
                     .iter()
                     .filter(|vote| vote.strong_edges.contains(&anchor))
                     .count();
+
+                Debug!("v.round: {}", v.round);
+                Debug!(
+                    "edges: {:?}",
+                    v.strong_edges
+                        .iter()
+                        .map(|v| v.source)
+                        .collect::<Vec<usize>>()
+                );
+                Debug!("edges total: {:?}", v.strong_edges.iter().count());
+                Debug!("vote_count: {vote_count}");
                 if vote_count >= self.DirectCommitThreshold() {
                     self.OrderAnchors(anchor);
                 }
