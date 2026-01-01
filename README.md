@@ -105,13 +105,12 @@ Debug builds (without the `--release` flag) additionally enable monotonous time-
 The simulator output is controlled via the `RUST_LOG` environment variable.
 
 - **`RUST_LOG=info`**:
-  - Shows high-level simulation status.
+  - Shows high-level simulation status
   - Progress bar is enabled
 - **`RUST_LOG=debug`**:
   - Enables the `Debug!` macro output from within processes.
-  - Useful for tracing message flows and internal state changes.
-- **`RUST_LOG=error`**:
-  - Shows critical failures.
+  - Shows crucial event timepoints during execution
+  - In order to filter events use the same variable (read docs for log crate)
 
 Example run:
 
