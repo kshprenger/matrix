@@ -14,12 +14,13 @@ Messages must implement the `Message` trait, which requires defining a `VirtualS
 use simulator::{Message, Jiffies};
 
 struct MyMessage {
-    data: String,
+    data: u32,
 }
 
 impl Message for MyMessage {
     fn VirtualSize(&self) -> usize {
-        self.data.len()
+        // Much bigger than real size, but zero-cost
+        1000
     }
 }
 ```
@@ -97,12 +98,15 @@ The simulator integrates with the `log` crate and `env_logger`.
 
 - **`Debug!(fmt, ...)`**: A macro wrapper around `log::debug!` that automatically prepends the current simulation time and process ID.
 
+Debug builds (without the `--release` flag) additionally enable monotonous time-tracking.
+
 ## Logging Configuration (`RUST_LOG`)
 
 The simulator output is controlled via the `RUST_LOG` environment variable.
 
 - **`RUST_LOG=info`**:
   - Shows high-level simulation status.
+  - Progress bar is enabled
 - **`RUST_LOG=debug`**:
   - Enables the `Debug!` macro output from within processes.
   - Useful for tracing message flows and internal state changes.
@@ -112,5 +116,5 @@ The simulator output is controlled via the `RUST_LOG` environment variable.
 Example run:
 
 ```bash
-RUST_LOG=debug cargo run
+RUST_LOG=info cargo run --bin example --release
 ```
