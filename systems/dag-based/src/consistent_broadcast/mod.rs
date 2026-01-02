@@ -12,9 +12,6 @@ use crate::consistent_broadcast::message::BCBMessageId;
 
 // Introduction to Reliable and Secure Distributed Programming
 // Algorithm 3.17: Signed Echo Broadcast
-//
-// Works as wrapper aroung generic dag-based bft consensus.
-// So it acts like process handle too.
 pub struct ByzantineConsistentBroadcast {
     messages: HashMap<BCBMessageId, (Rc<dyn Message>, usize)>, // usize -> signature count, once it reaches 2f+1 message pops out
     waiting_certificates: HashSet<BCBMessageId>,
