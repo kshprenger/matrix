@@ -93,12 +93,13 @@ These functions are available globally but must be called within the context of 
 - **`SendTo(ProcessId, impl Message)`**: Sends a message to a specific process.
 - **`ScheduleTimerAfter(Jiffies) -> TimerId`**: Schedules a timer interrupt for the current process after a delay.
 - **`CurrentId() -> ProcessId`**: Returns the ID of the currently executing process.
+- **`Now() -> Jiffies`**: Current time.
 
 ### Logging & Debugging
 
 Matrix integrates with the `log` crate and `env_logger`.
 
-- **`Debug!(fmt, ...)`**: A macro wrapper around `log::debug!` that automatically prepends the current simulation time and process ID.
+- **`Debug!(fmt, ...)`**: A macro wrapper around `log::debug!` that automatically prepends current simulation time and process ID.
 
 Debug builds (without the `--release` flag) additionally enable monotonous time-tracking.
 

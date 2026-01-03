@@ -80,8 +80,7 @@ impl Simulation {
                 time::FastForwardClock(future);
                 actor.borrow_mut().Step();
                 access::Drain(); // Only after Step() to avoid double borrow_mut() of SharedActor
-                self.progress_bar
-                    .MakeProgress(std::cmp::min(future, self.time_budget));
+                self.progress_bar.MakeProgress(future.min(self.time_budget));
             }
         }
     }
