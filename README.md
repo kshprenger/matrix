@@ -95,6 +95,7 @@ These functions are available globally but must be called within the context of 
 - **`CurrentId() -> ProcessId`**: Returns the ID of the currently executing process.
 - **`Now() -> Jiffies`**: Current time.
 - **`ListPool(&str) -> Vec<ProcessId>`**: List all processes that are in the pool with specified name. Panics if pool does not exist.
+- **`NextGlobalUniqueId() -> usize`**: Generates globally-unique id.
 
 ### Logging & Debugging
 
