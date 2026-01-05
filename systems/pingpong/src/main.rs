@@ -46,6 +46,7 @@ impl ProcessHandle for ExampleProcess {
         if from == 1 && CurrentId() == 2 {
             assert!(*m == PingPongMessage::Ping);
             Debug!("Sending Pong");
+            anykv::Modify::<usize>("pongs", |p| *p += 1);
             SendTo(1, PingPongMessage::Pong);
             return;
         }
@@ -53,6 +54,7 @@ impl ProcessHandle for ExampleProcess {
         if from == 2 && CurrentId() == 1 {
             assert!(*m == PingPongMessage::Pong);
             Debug!("Sending Ping");
+            anykv::Modify::<usize>("pings", |p| *p += 1);
             SendTo(2, PingPongMessage::Ping);
             return;
         }
@@ -60,12 +62,16 @@ impl ProcessHandle for ExampleProcess {
 
     fn OnTimer(&mut self, id: TimerId) {
         assert!(id == self.timer_id);
+        anykv::Modify::<usize>("pings", |p| *p += 1);
         SendTo(2, PingPongMessage::Ping);
     }
 }
 
 fn main() {
     let start = Instant::now();
+
+    anykv::Set::<usize>("pings", 0);
+    anykv::Set::<usize>("pongs", 0);
 
     SimulationBuilder::NewDefault()
         .AddPool("ExamplePool", 2, || ExampleProcess::New())
@@ -76,18 +82,10 @@ fn main() {
         .Build()
         .Run();
 
-    println!("Done, elapsed: {:?}", start.elapsed());
-
-    let start = Instant::now();
-
-    SimulationBuilder::NewDefault()
-        .AddPool("ExamplePool", 2, || ExampleProcess::New())
-        .NICBandwidth(matrix::BandwidthType::Bounded(5))
-        .MaxLatency(Jiffies(10))
-        .TimeBudget(Jiffies(100_000_000))
-        .Seed(5)
-        .Build()
-        .Run();
-
-    println!("Done, elapsed: {:?}", start.elapsed());
+    println!(
+        "Done, elapsed: {:?}. Pings sent: {}, Pongs sent: {}",
+        start.elapsed(),
+        anykv::Get::<usize>("pings"),
+        anykv::Get::<usize>("pongs"),
+    );
 }
