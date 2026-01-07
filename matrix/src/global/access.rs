@@ -40,6 +40,23 @@ impl SimulationAccess {
         self.pools.get(name).expect("Pool does not exist").clone()
     }
 
+    fn BroadcastWithinPool(&mut self, pool: &str, message: impl Message + 'static) {
+        let shared = Rc::new(message);
+        let procs = self.ListPool(pool);
+        self.scheduled_messages.append(
+            &mut procs
+                .iter()
+                .map(|id| {
+                    (
+                        self.process_on_execution,
+                        Destination::To(*id),
+                        shared.clone() as Rc<dyn Message>,
+                    )
+                })
+                .collect::<Vec<(ProcessId, Destination, Rc<dyn Message>)>>(),
+        );
+    }
+
     fn Broadcast(&mut self, message: impl Message + 'static) {
         self.scheduled_messages.push((
             self.process_on_execution,
@@ -117,6 +134,10 @@ pub fn ScheduleTimerAfter(after: Jiffies) -> TimerId {
 
 pub fn Broadcast(message: impl Message + 'static) {
     WithAccess(|access| access.Broadcast(message));
+}
+
+pub fn BroadcastWithinPool(pool: &str, message: impl Message + 'static) {
+    WithAccess(|access| access.BroadcastWithinPool(pool, message));
 }
 
 pub fn SendTo(to: ProcessId, message: impl Message + 'static) {

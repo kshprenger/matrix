@@ -21,6 +21,7 @@ pub use simulation::Simulation;
 pub use simulation_builder::SimulationBuilder;
 
 pub use global::Broadcast;
+pub use global::BroadcastWithinPool;
 pub use global::CurrentId;
 pub use global::GlobalUniqueId;
 pub use global::ListPool;

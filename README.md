@@ -98,6 +98,7 @@ fn main() {
 These functions are available globally but must be called within the context of a running process step (e.g., inside `OnMessage`, `Bootstrap`, or `OnTimer`).
 
 - **`Broadcast(impl Message)`**: Sends a message to all other processes.
+- **`BroadcastWithinPool(pool,impl Message)`**: Sends a message to all other processes withing specified pool
 - **`SendTo(ProcessId, impl Message)`**: Sends a message to a specific process.
 - **`ScheduleTimerAfter(Jiffies) -> TimerId`**: Schedules a timer interrupt for the current process after a delay.
 - **`CurrentId() -> ProcessId`**: Returns the ID of the currently executing process.
