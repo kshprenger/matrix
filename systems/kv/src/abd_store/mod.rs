@@ -12,19 +12,13 @@ use crate::abd_store::{
     types::Key,
 };
 
+#[derive(Default)]
 pub struct Replica {
     proc_num: usize,
     registers: HashMap<Key, MWMRAtomicRegister>,
 }
 
 impl Replica {
-    pub fn New() -> Self {
-        Self {
-            proc_num: 0,
-            registers: HashMap::new(),
-        }
-    }
-
     fn QuorumSize(&self) -> usize {
         self.proc_num / 2 + 1
     }
@@ -37,7 +31,7 @@ impl Replica {
 }
 
 impl ProcessHandle for Replica {
-    fn Bootstrap(&mut self, _configuration: matrix::Configuration) {
+    fn Bootstrap(&mut self) {
         // Do nothing
     }
 

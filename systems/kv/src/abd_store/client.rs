@@ -1,4 +1,6 @@
-use matrix::*;
+use std::ops::Deref;
+
+use matrix::{global::configuration, *};
 
 use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};
 
@@ -31,8 +33,8 @@ pub struct Client {
     keypool: Vec<Key>,
 }
 
-impl Client {
-    pub fn New() -> Self {
+impl Default for Client {
+    fn default() -> Self {
         Self {
             rng: None,
             keypool: vec![1],
@@ -41,8 +43,8 @@ impl Client {
 }
 
 impl ProcessHandle for Client {
-    fn Bootstrap(&mut self, configuration: matrix::Configuration) {
-        self.rng = Some(StdRng::seed_from_u64(configuration.seed));
+    fn Bootstrap(&mut self) {
+        self.rng = Some(StdRng::seed_from_u64(configuration::Seed()));
         ScheduleTimerAfter(Jiffies(100));
     }
 
