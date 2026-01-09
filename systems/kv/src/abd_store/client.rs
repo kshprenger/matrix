@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use matrix::{global::configuration, *};
 
 use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};

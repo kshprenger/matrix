@@ -36,25 +36,16 @@ impl SimulationAccess {
 }
 
 impl SimulationAccess {
-    fn ListPool(&mut self, name: &str) -> Vec<ProcessId> {
-        self.pools.get(name).expect("Pool does not exist").clone()
+    fn ListPool(&mut self, name: &str) -> &[ProcessId] {
+        self.pools.get(name).expect("Pool does not exist")
     }
 
-    fn BroadcastWithinPool(&mut self, pool: &str, message: impl Message + 'static) {
-        let shared = Rc::new(message);
-        let procs = self.ListPool(pool);
-        self.scheduled_messages.append(
-            &mut procs
-                .iter()
-                .map(|id| {
-                    (
-                        self.process_on_execution,
-                        Destination::To(*id),
-                        shared.clone() as Rc<dyn Message>,
-                    )
-                })
-                .collect::<Vec<(ProcessId, Destination, Rc<dyn Message>)>>(),
-        );
+    fn BroadcastWithinPool(&mut self, pool_name: &'static str, message: impl Message + 'static) {
+        self.scheduled_messages.push((
+            self.process_on_execution,
+            Destination::BroadcastWithingPool(pool_name),
+            Rc::new(message),
+        ));
     }
 
     fn Broadcast(&mut self, message: impl Message + 'static) {
@@ -136,7 +127,7 @@ pub fn Broadcast(message: impl Message + 'static) {
     WithAccess(|access| access.Broadcast(message));
 }
 
-pub fn BroadcastWithinPool(pool: &str, message: impl Message + 'static) {
+pub fn BroadcastWithinPool(pool: &'static str, message: impl Message + 'static) {
     WithAccess(|access| access.BroadcastWithinPool(pool, message));
 }
 
@@ -149,7 +140,7 @@ pub fn CurrentId() -> ProcessId {
 }
 
 pub fn ListPool(name: &str) -> Vec<ProcessId> {
-    WithAccess(|access| access.ListPool(name))
+    WithAccess(|access| access.ListPool(name).to_vec())
 }
 
 // Userspace debugger
