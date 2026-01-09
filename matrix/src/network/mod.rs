@@ -38,6 +38,7 @@ impl Network {
     ) {
         let targets = match destination {
             Destination::Broadcast => self.procs.Keys().copied().collect::<Vec<ProcessId>>(),
+            Destination::BroadcastWithingPool(pool_name) => self.procs.ListPool(pool_name).to_vec(),
             Destination::To(to) => vec![to],
         };
 

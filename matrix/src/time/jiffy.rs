@@ -3,7 +3,7 @@ use std::{
     ops::{Add, AddAssign, Mul, Sub},
 };
 
-#[derive(PartialEq, PartialOrd, Ord, Eq, Copy, Clone)]
+#[derive(PartialEq, PartialOrd, Ord, Eq, Copy, Clone, Default)]
 pub struct Jiffies(pub usize);
 
 impl Add for Jiffies {

@@ -5,7 +5,8 @@ pub(crate) fn SetupGlobalConfiguration(proc_num: usize) {
 }
 
 pub(crate) fn SetupLocalConfiguration(id: ProcessId, base_seed: Seed) {
-    anykv::Set::<u64>(&format!("seeds/{}", id), base_seed + id as u64) // Prevent resonance between procs
+    // Prevent resonance between procs by changing seed a little bit
+    anykv::Set::<u64>(&format!("seeds/{}", id), base_seed + id as u64)
 }
 
 pub fn Seed() -> Seed {

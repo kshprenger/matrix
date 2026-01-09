@@ -38,7 +38,7 @@ impl Simulation {
             pool_listing.insert(name, ids);
         }
 
-        let proc_pool = ProcessPool::NewShared(procs);
+        let proc_pool = ProcessPool::NewShared(procs, pool_listing.clone());
 
         let network_actor = Rc::new(RefCell::new(Network::New(
             seed,
