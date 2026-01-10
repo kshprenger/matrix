@@ -70,11 +70,12 @@ impl ProcessHandle for Client {
         anykv::Modify::<ExecutionHistory>("linearizable_history", |h| {
             h.push(self.current_op.clone());
         });
+
+        ScheduleTimerAfter(Jiffies(100));
     }
 
     fn OnTimer(&mut self, _id: matrix::TimerId) {
         self.DoRandomOperation();
-        ScheduleTimerAfter(Jiffies(100));
     }
 }
 

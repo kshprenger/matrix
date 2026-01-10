@@ -11,9 +11,9 @@ fn main() {
     let sim = SimulationBuilder::NewDefault()
         .AddPool::<Replica>(REPLICA_POOL_NAME, 10)
         .AddPool::<Client>(CLIENT_POOL_NAME, 4)
-        .TimeBudget(Jiffies(5000))
-        .MaxLatency(Jiffies(0))
-        .Seed(13123123)
+        .TimeBudget(Jiffies(50000))
+        .MaxLatency(Jiffies(545))
+        .Seed(5444)
         .Build();
 
     anykv::Set::<ExecutionHistory>("linearizable_history", ExecutionHistory::new());
@@ -32,7 +32,7 @@ fn main() {
         let result = el
             .result
             .map(|v| v.to_string())
-            .unwrap_or_else(|| "-".to_string());
+            .unwrap_or_else(|| "Ack".to_string());
         println!(
             "{:<8} | {:<12} | {:<8} | {:<12} | {:<12}",
             el.client, el.operation, result, el.start, el.end
