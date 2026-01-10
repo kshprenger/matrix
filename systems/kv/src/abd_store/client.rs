@@ -1,21 +1,12 @@
 use matrix::{
     global::{anykv, configuration},
+    lincheck::history::{Entry, ExecutionHistory},
     *,
 };
 
 use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};
 
 use crate::abd_store::types::{Key, Value};
-
-#[derive(Default, Clone)]
-pub struct ExecutionHistoryEntry {
-    pub client: ProcessId,
-    pub operation: String,
-    pub result: Option<Value>,
-    pub start: Jiffies,
-    pub end: Jiffies,
-}
-pub type ExecutionHistory = Vec<ExecutionHistoryEntry>;
 
 pub(crate) enum ClientReq {
     PutRequest(Key, Value),
@@ -33,7 +24,7 @@ impl Message for ClientResponse {}
 pub struct Client {
     rng: Option<StdRng>,
     keypool: Vec<Key>,
-    current_op: ExecutionHistoryEntry,
+    current_op: Option<Entry>,
 }
 
 impl Default for Client {
@@ -41,7 +32,7 @@ impl Default for Client {
         Self {
             rng: None,
             keypool: vec![1, 3, 4, 6, 10],
-            current_op: ExecutionHistoryEntry::default(),
+            current_op: None,
         }
     }
 }
@@ -54,21 +45,23 @@ impl ProcessHandle for Client {
 
     fn OnMessage(&mut self, from: matrix::ProcessId, message: matrix::MessagePtr) {
         let response = message.As::<ClientResponse>();
-        self.current_op.client = CurrentId();
-        self.current_op.end = Now();
+        self.current_op.as_mut().map(|op| op.client = CurrentId());
+        self.current_op.as_mut().map(|op| op.end = Now());
         match *response {
             ClientResponse::GetResponse(value) => {
                 Debug!("Got get response from {from}. Value: {value}");
-                self.current_op.result = Some(value);
+                self.current_op
+                    .as_mut()
+                    .map(|op| op.result = Some(value.to_string()));
             }
             ClientResponse::PutAck => {
                 Debug!("Got PutAck from {from}");
-                self.current_op.result = None;
+                self.current_op.as_mut().map(|op| op.result = None);
             }
         }
 
         anykv::Modify::<ExecutionHistory>("linearizable_history", |h| {
-            h.push(self.current_op.clone());
+            h.push(self.current_op.clone().unwrap());
         });
 
         ScheduleTimerAfter(Jiffies(100));
@@ -102,11 +95,13 @@ impl Client {
         let random_bool = self.rng.as_mut().unwrap().random::<bool>();
         let random_key = self.ChooseKey();
 
-        self.current_op.start = Now();
+        self.current_op.as_mut().map(|op| op.start = Now());
 
         if random_bool {
             Debug!("Choosed operation: Get({random_key})");
-            self.current_op.operation = String::from(format!("Get({random_key})"));
+            self.current_op
+                .as_mut()
+                .map(|op| op.operation = String::from(format!("Get({random_key})")));
             ClientReq::GetRequest(random_key)
         } else {
             let value = self.ChooseValue();

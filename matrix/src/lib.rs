@@ -3,6 +3,7 @@
 mod actor;
 mod communication;
 pub mod global;
+pub mod lincheck;
 mod network;
 mod process;
 mod progress;
