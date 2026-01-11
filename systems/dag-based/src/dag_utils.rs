@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, ops::Index, rc::Rc};
 
 use matrix::{
-    CurrentId, Now, ProcessId,
+    CurrentId, Jiffies, Now, ProcessId,
     global::anykv,
     time::{self},
 };
@@ -70,9 +70,19 @@ impl RoundBasedDAG {
                 } else {
                     self.ordered[real_round][edge.source] = true;
                     if CurrentId() == edge.source {
-                        anykv::Modify::<Vec<time::Jiffies>>("latency", |l| {
-                            l.push(Now() - edge.creation_time);
-                        });
+                        anykv::Modify::<(f64, usize)>(
+                            "avg_latency",
+                            |(prev_avg_latency, prev_total_ordered)| {
+                                let vertex_latency = Now() - edge.creation_time;
+                                *prev_avg_latency = (vertex_latency.0 as f64
+                                    + (*prev_avg_latency * *prev_total_ordered as f64))
+                                    as f64
+                                    / (*prev_total_ordered + 1) as f64;
+
+                                *prev_total_ordered += 1;
+                                println!("{}", *prev_avg_latency);
+                            },
+                        );
                     }
                     queue.push_back(edge);
                 }
