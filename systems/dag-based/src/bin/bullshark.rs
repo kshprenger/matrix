@@ -10,7 +10,7 @@ fn main() {
     let file = File::create("results.csv").unwrap();
     let file = Mutex::new(file);
 
-    (300..3000).into_par_iter().for_each(|k_validators| {
+    (4..3000).into_par_iter().for_each(|k_validators| {
         // 1 jiffy == 1 real millisecond
         let sim = SimulationBuilder::NewDefault()
             .AddPool::<Bullshark>("Validators", k_validators)

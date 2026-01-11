@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, ops::Index, rc::Rc};
 
 use matrix::{
-    CurrentId, Jiffies, Now, ProcessId,
+    CurrentId, Now, ProcessId,
     global::anykv,
     time::{self},
 };
@@ -80,7 +80,6 @@ impl RoundBasedDAG {
                                     / (*prev_total_ordered + 1) as f64;
 
                                 *prev_total_ordered += 1;
-                                println!("{}", *prev_avg_latency);
                             },
                         );
                     }
