@@ -46,7 +46,7 @@ impl Default for SparseBullshark {
         Self {
             rbcast: ByzantineConsistentBroadcast::New(),
             proc_num: 0,
-            dag: RoundBasedDAG::New(),
+            dag: RoundBasedDAG::default(),
             round: 0,
             buffer: BTreeSet::new(),
             last_ordered_round: 0,

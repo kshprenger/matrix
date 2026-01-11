@@ -50,7 +50,7 @@ impl Default for Bullshark {
             rbcast: ByzantineConsistentBroadcast::New(),
             self_id: 0,
             proc_num: 0,
-            dag: RoundBasedDAG::New(),
+            dag: RoundBasedDAG::default(),
             round: 0,
             buffer: BTreeSet::new(),
             last_ordered_round: 0,
