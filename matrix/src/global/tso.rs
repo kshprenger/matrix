@@ -5,13 +5,9 @@ thread_local! {
 }
 
 pub fn GlobalUniqueId() -> usize {
-    TSO.with(|cell| {
-        let result = cell.get();
-        cell.set(result + 1);
-        result
-    })
+    TSO.replace(TSO.get() + 1)
 }
 
 pub(crate) fn Drop() {
-    TSO.with(|cell| cell.set(0));
+    TSO.take();
 }

@@ -1,4 +1,4 @@
-use std::{any::Any, cmp::Reverse, rc::Rc};
+use std::{any::Any, cmp::Reverse, collections::BinaryHeap, rc::Rc};
 
 use crate::{process::ProcessId, time::Jiffies};
 
@@ -77,4 +77,4 @@ impl Ord for RoutedMessage {
     }
 }
 
-pub type TimePriorityMessageQueue = std::collections::BinaryHeap<Reverse<RoutedMessage>>;
+pub type TimePriorityMessageQueue = BinaryHeap<Reverse<RoutedMessage>>;

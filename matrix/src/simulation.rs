@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, process::exit, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, process::exit, rc::Rc, usize};
 
 use log::{error, info};
 
@@ -99,10 +99,22 @@ impl Simulation {
     }
 
     fn PeekClosest(&mut self) -> Option<(Jiffies, SharedActor)> {
-        self.actors
-            .iter_mut()
-            .filter_map(|actor| Some((actor.borrow().PeekClosest()?, actor.clone())))
-            .min_by_key(|tuple| tuple.0)
+        let mut min_time = Jiffies(usize::MAX);
+        let mut sha: Option<SharedActor> = None;
+        for actor in self.actors.iter() {
+            actor.borrow().PeekClosest().map(|time| {
+                if time < min_time {
+                    min_time = time;
+                    sha = Some(actor.clone())
+                }
+            });
+        }
+
+        if sha.is_none() {
+            return None;
+        } else {
+            return Some((min_time, sha.unwrap()));
+        }
     }
 }
 

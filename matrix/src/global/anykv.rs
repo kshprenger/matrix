@@ -33,8 +33,5 @@ pub fn Modify<T: 'static>(key: &str, f: impl FnOnce(&mut T)) {
 }
 
 pub fn Drop() {
-    ANY_KV.with(|m| {
-        m.borrow_mut().clear();
-        m.borrow_mut().shrink_to_fit();
-    });
+    ANY_KV.take();
 }

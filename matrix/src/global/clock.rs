@@ -9,18 +9,15 @@ thread_local! {
 }
 
 pub(crate) fn Drop() {
-    CLOCK.with(|cell| cell.set(Jiffies(0)));
+    CLOCK.take();
 }
 
 pub(crate) fn FastForwardClock(future: Jiffies) {
-    CLOCK.with(|cell| {
-        let present = cell.get();
-        debug_assert!(present <= future, "Future < Present");
-        cell.set(future);
-        debug!("Global time now: {future}");
-    });
+    let present = CLOCK.replace(future);
+    debug_assert!(present <= future, "Future < Present");
+    debug!("Global time now: {future}");
 }
 
 pub fn Now() -> Jiffies {
-    CLOCK.with(|cell| cell.get())
+    CLOCK.get()
 }
