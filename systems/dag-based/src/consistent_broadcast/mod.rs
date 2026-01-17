@@ -58,7 +58,7 @@ impl ByzantineConsistentBroadcast {
         Broadcast(BCBMessage::Initiate((next_id, shared)));
     }
 
-    pub(crate) fn Bootstrap(&mut self, proc_num: usize) {
+    pub(crate) fn Start(&mut self, proc_num: usize) {
         self.process_id = CurrentId();
         self.proc_num = proc_num;
     }

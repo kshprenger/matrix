@@ -1,4 +1,4 @@
-use std::{fs::File, sync::Mutex};
+use std::{fs::File, sync::Mutex, time::Instant};
 
 use dag_based::bullshark::Bullshark;
 use matrix::{BandwidthType, SimulationBuilder, global::anykv, time::Jiffies};
@@ -10,11 +10,12 @@ fn main() {
     let file = File::create("results.csv").unwrap();
     let file = Mutex::new(file);
 
-    (10000..=10000)
+    (100..=100)
         .step_by(1)
-        .par_bridge()
-        .into_par_iter()
+        // .par_bridge()
+        .into_iter()
         .for_each(|k_validators| {
+            let start = Instant::now();
             // 1 jiffy == 1 real millisecond
             let mut sim = SimulationBuilder::NewDefault()
                 .AddPool::<Bullshark>("Validators", k_validators)
@@ -29,6 +30,7 @@ fn main() {
             anykv::Set::<usize>("timeouts-fired", 0);
 
             sim.Run();
+            println!("elapsed: {} millis", start.elapsed().as_millis());
             println!("Simulation done for {k_validators} validators");
 
             let ordered = anykv::Get::<(f64, usize)>("avg_latency").1;

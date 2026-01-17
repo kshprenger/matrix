@@ -9,7 +9,7 @@ pub(crate) type MutableProcessHandle = RefCell<UniqueProcessHandle>;
 
 pub trait ProcessHandle {
     // This methods requires process to schedule some initial messages.
-    fn Bootstrap(&mut self);
+    fn Start(&mut self);
 
     // Deliver message with source process
     fn OnMessage(&mut self, from: ProcessId, message: MessagePtr);

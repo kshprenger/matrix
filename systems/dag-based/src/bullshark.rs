@@ -65,11 +65,11 @@ impl Default for Bullshark {
 }
 
 impl ProcessHandle for Bullshark {
-    fn Bootstrap(&mut self) {
+    fn Start(&mut self) {
         self.self_id = CurrentId();
         self.proc_num = configuration::ProcessNumber();
         self.dag.SetRoundSize(configuration::ProcessNumber());
-        self.rbcast.Bootstrap(configuration::ProcessNumber());
+        self.rbcast.Start(configuration::ProcessNumber());
 
         // Shared genesis vertices
         let genesis_vertex = VertexPtr::new(Vertex {

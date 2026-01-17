@@ -38,7 +38,7 @@ use matrix::global::configuration;
 struct MyProcess;
 
 impl ProcessHandle for MyProcess {
-    fn Bootstrap(&mut self) {
+    fn Start(&mut self) {
         Debug!("Starting process {} of {}", CurrentId(), configuration::ProcessNumber());
         // Schedule initial events or broadcast messages
         ScheduleTimerAfter(Jiffies(100));
@@ -95,7 +95,7 @@ fn main() {
 
 ### Process Interaction (Context-Aware)
 
-These functions are available globally but must be called within the context of a running process step (e.g., inside `OnMessage`, `Bootstrap`, or `OnTimer`).
+These functions are available globally but must be called within the context of a running process step (e.g., inside `OnMessage`, `Start`, or `OnTimer`).
 
 - **`Broadcast(impl Message)`**: Sends a message to all other processes.
 - **`BroadcastWithinPool(pool,impl Message)`**: Sends a message to all other processes withing specified pool.
@@ -143,10 +143,10 @@ Matrix output is controlled via the `RUST_LOG` environment variable.
 Example run:
 
 ```bash
-RUST_LOG=info cargo run --bin pingpong --release            // With progress bar
-RUST_LOG=debug cargo run --bin pingpong --release           // All debug messages
-RUST_LOG=pingpong=debug cargo run --bin pingpong --release  // Only Debug! macro enabled for user crate
-RUST_LOG=matrix=debug cargo run --bin pingpong --release    // All debug messages for matrix crate
+RUST_LOG=info cargo run --bin pingpong --release            # With progress bar
+RUST_LOG=debug cargo run --bin pingpong --release           # All debug messages
+RUST_LOG=pingpong=debug cargo run --bin pingpong --release  # Only Debug! macro enabled for user crate
+RUST_LOG=matrix=debug cargo run --bin pingpong --release    # All debug messages for matrix crate
 ```
 
 ## Thanks to

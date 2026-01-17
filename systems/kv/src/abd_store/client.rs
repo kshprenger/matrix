@@ -47,7 +47,7 @@ impl Default for Client {
 }
 
 impl ProcessHandle for Client {
-    fn Bootstrap(&mut self) {
+    fn Start(&mut self) {
         self.rng = Some(StdRng::seed_from_u64(configuration::Seed()));
         ScheduleTimerAfter(Jiffies(100));
     }

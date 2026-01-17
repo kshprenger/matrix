@@ -115,7 +115,7 @@ impl SimulationActor for Network {
 
             global::SetProcess(*id);
 
-            handle.Bootstrap();
+            handle.Start();
         });
     }
 

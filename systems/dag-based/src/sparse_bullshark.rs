@@ -62,11 +62,11 @@ impl Default for SparseBullshark {
     }
 }
 impl ProcessHandle for SparseBullshark {
-    fn Bootstrap(&mut self) {
+    fn Start(&mut self) {
         self.proc_num = configuration::ProcessNumber();
         self.sampler = Some(StdRng::seed_from_u64(configuration::Seed()));
         self.dag.SetRoundSize(configuration::ProcessNumber());
-        self.rbcast.Bootstrap(configuration::ProcessNumber());
+        self.rbcast.Start(configuration::ProcessNumber());
 
         // Shared genesis vertices
         let genesis_vertex = VertexPtr::new(Vertex {

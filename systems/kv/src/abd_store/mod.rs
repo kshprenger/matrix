@@ -32,7 +32,7 @@ impl Replica {
 }
 
 impl ProcessHandle for Replica {
-    fn Bootstrap(&mut self) {
+    fn Start(&mut self) {
         // Do nothing
     }
 

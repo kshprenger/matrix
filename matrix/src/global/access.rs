@@ -147,6 +147,6 @@ pub fn ListPool(name: &str) -> Vec<ProcessId> {
 #[macro_export]
 macro_rules! Debug {
     ($($arg:tt)+) => {
-        log::debug!("[Now: {} | Process {}] {}", Now(), CurrentId(), format_args!($($arg)+));
+        log::debug!("[Now: {} | P{}] {}", Now(), CurrentId(), format_args!($($arg)+));
     }
 }
