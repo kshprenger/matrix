@@ -46,7 +46,7 @@ pub struct Bullshark {
 impl Default for Bullshark {
     fn default() -> Self {
         Self {
-            rbcast: ByzantineConsistentBroadcast::New(),
+            rbcast: ByzantineConsistentBroadcast::default(),
             self_id: 0,
             proc_num: 0,
             dag: RoundBasedDAG::default(),

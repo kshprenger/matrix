@@ -52,7 +52,7 @@ pub struct SparseBullshark {
 impl Default for SparseBullshark {
     fn default() -> Self {
         Self {
-            rbcast: ByzantineConsistentBroadcast::New(),
+            rbcast: ByzantineConsistentBroadcast::default(),
             proc_num: 0,
             dag: RoundBasedDAG::default(),
             round: 0,

@@ -12,24 +12,13 @@ use crate::consistent_broadcast::message::BCBMessageId;
 
 // Introduction to Reliable and Secure Distributed Programming
 // Algorithm 3.17: Signed Echo Broadcast
+#[derive(Default)]
 pub struct ByzantineConsistentBroadcast {
     messages: HashMap<BCBMessageId, (Rc<dyn Message>, usize)>, // usize -> signature count, once it reaches 2f+1 message pops out
     waiting_certificates: HashSet<BCBMessageId>,
     process_id: ProcessId,
     message_id: usize,
     proc_num: usize,
-}
-
-impl ByzantineConsistentBroadcast {
-    pub fn New() -> Self {
-        Self {
-            messages: HashMap::new(),
-            waiting_certificates: HashSet::new(),
-            process_id: 0,
-            message_id: 0,
-            proc_num: 0,
-        }
-    }
 }
 
 impl ByzantineConsistentBroadcast {

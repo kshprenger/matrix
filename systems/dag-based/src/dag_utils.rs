@@ -178,7 +178,7 @@ impl RoundBasedDAG {
     }
 
     pub fn CurrentMaxAllocatedRound(&self) -> usize {
-        self.CurrentAllocatedRounds() - 1
+        self.CurrentAllocatedRounds().saturating_sub(1)
     }
 }
 
