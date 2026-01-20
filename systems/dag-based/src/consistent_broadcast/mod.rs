@@ -1,5 +1,6 @@
 mod message;
 pub(crate) use message::BCBMessage;
+pub(crate) use message::ID_SIZE;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -88,7 +89,7 @@ impl ByzantineConsistentBroadcast {
                     Some(message_state) => {
                         message_state.1 += 1;
                         if message_state.1 == self.QuorumSize() {
-                            Broadcast(BCBMessage::Certificate(self.QuorumSize(), *id));
+                            Broadcast(BCBMessage::Certificate(self.proc_num, *id));
                         }
                         return None;
                     }

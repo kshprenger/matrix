@@ -10,7 +10,7 @@ use matrix::{
     time::{self},
 };
 
-const GC_REMAIN: usize = 40;
+const GC_REMAIN: usize = usize::MAX;
 
 pub type VertexPtr = Rc<Vertex>;
 type Round = Vec<Option<VertexPtr>>;
@@ -28,7 +28,7 @@ pub struct Vertex {
     // Each party contains strong Rc references to vertices in their dags.
     // At the same time in the real dag edges are represented with weak Rc references.
     // Once all parties GC-ed their dags, Vertices will be deallocated because there will be no more strong Rc references.
-    // Until GC time is is safe for the process to upgrade Weak refs.
+    // Until GC time is is safe for the process to upgrade Weak refs traversing dag backwards.
     pub strong_edges: Vec<Weak<Vertex>>,
 }
 
