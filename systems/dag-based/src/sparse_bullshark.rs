@@ -28,10 +28,9 @@ impl Message for SparseBullsharkMessage {
     fn VirtualSize(&self) -> usize {
         // Round, ProcessId
         4 + 4
-            + 3000 * 512 // Block of 3000 txns by 512 byte each
             + match self {
                 SparseBullsharkMessage::Genesis(v) => v.strong_edges.len() * 32, // sha256 block pointers
-                SparseBullsharkMessage::Vertex(v) =>  v.strong_edges.len() * 32, // sha256 block pointers
+                SparseBullsharkMessage::Vertex(v) => v.strong_edges.len() * 32, // sha256 block pointers
             }
     }
 }

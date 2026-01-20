@@ -118,6 +118,7 @@ impl RoundBasedDAG {
     }
 
     // v & u should be already in the DAG
+    // u.round <= v.round
     pub fn PathExists(&mut self, v: &VertexPtr, u: &VertexPtr) -> bool {
         if SameVertex(&v, &u) {
             return true;
@@ -141,6 +142,10 @@ impl RoundBasedDAG {
                 .collect();
 
             for edge in strong_edges.into_iter() {
+                // Reached depth
+                if edge.round < u.round {
+                    continue;
+                }
                 if SameVertex(&edge, &u) {
                     return true;
                 } else {
