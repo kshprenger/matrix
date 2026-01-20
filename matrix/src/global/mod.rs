@@ -10,6 +10,7 @@ pub use clock::Now;
 
 pub use access::Broadcast;
 pub use access::BroadcastWithinPool;
+pub use access::ChooseFromPool;
 pub use access::CurrentId;
 pub use access::ListPool;
 pub use access::ScheduleTimerAfter;

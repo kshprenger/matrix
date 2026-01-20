@@ -119,6 +119,7 @@ These functions are available globally but must be called within the context of 
 - **`CurrentId() -> ProcessId`**: Returns the ID of the currently executing process.
 - **`Now() -> Jiffies`**: Returns current simulation time.
 - **`ListPool(&str) -> Vec<ProcessId>`**: List all processes in a pool.
+- **`ChooseFromPool(&str) -> ProcessId`**: Choose random process id from specified pool.
 - **`GlobalUniqueId() -> usize`**: Generates a globally unique ID (TSO).
 
 ### Configuration (`matrix::global::configuration`)
