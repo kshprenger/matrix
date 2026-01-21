@@ -29,6 +29,7 @@ pub use global::GlobalUniqueId;
 pub use global::ListPool;
 pub use global::Now;
 pub use global::ScheduleTimerAfter;
+pub use global::SendRandomFromPool;
 pub use global::SendTo;
 
 pub use network::BandwidthDescription;

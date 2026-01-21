@@ -73,6 +73,11 @@ impl SimulationAccess {
         ));
     }
 
+    fn SendRandomFromPool(&mut self, pool: &str, message: impl Message + 'static) {
+        let target = self.ChooseFromPool(pool);
+        self.SendTo(target, message);
+    }
+
     fn ScheduleTimerAfter(&mut self, after: Jiffies) -> TimerId {
         let timer_id = NextTimerId();
         self.scheduled_timers
@@ -144,6 +149,10 @@ pub fn BroadcastWithinPool(pool: &'static str, message: impl Message + 'static) 
 
 pub fn SendTo(to: ProcessId, message: impl Message + 'static) {
     WithAccess(|access| access.SendTo(to, message));
+}
+
+pub fn SendRandomFromPool(pool: &'static str, message: impl Message + 'static) {
+    WithAccess(|access| access.SendRandomFromPool(pool, message));
 }
 
 pub fn CurrentId() -> ProcessId {

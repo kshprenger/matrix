@@ -115,6 +115,7 @@ These functions are available globally but must be called within the context of 
 - **`Broadcast(impl Message)`**: Sends a message to all other processes.
 - **`BroadcastWithinPool(&str, impl Message)`**: Sends a message to all other processes within a specific pool.
 - **`SendTo(ProcessId, impl Message)`**: Sends a message to a specific process.
+- **`SendRandomFromPool(&str, impl Message)`**: Sends a message to random process whithin pool.
 - **`ScheduleTimerAfter(Jiffies) -> TimerId`**: Schedules a timer interrupt for the current process.
 - **`CurrentId() -> ProcessId`**: Returns the ID of the currently executing process.
 - **`Now() -> Jiffies`**: Returns current simulation time.

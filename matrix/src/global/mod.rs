@@ -14,6 +14,7 @@ pub use access::ChooseFromPool;
 pub use access::CurrentId;
 pub use access::ListPool;
 pub use access::ScheduleTimerAfter;
+pub use access::SendRandomFromPool;
 pub use access::SendTo;
 
 pub(crate) use access::Drain;
