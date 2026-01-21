@@ -199,6 +199,11 @@ dependencies = [
 [[package]]
 name = "hotstuff"
 version = "0.1.0"
+dependencies = [
+ "log",
+ "matrix",
+ "rand",
+]
 
 [[package]]
 name = "indicatif"
