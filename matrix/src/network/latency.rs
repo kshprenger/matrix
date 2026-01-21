@@ -26,7 +26,7 @@ impl LatencyQueue {
             "Arrival time before adding latency: {}",
             message.arrival_time
         );
-        message.arrival_time += self.randomizer.Random(
+        message.arrival_time += self.randomizer.RandomLatency(
             self.topology
                 .GetDistribution(message.step.source, message.step.dest),
         );

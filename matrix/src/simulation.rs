@@ -7,7 +7,7 @@ use crate::{
     global,
     network::{BandwidthDescription, Network},
     progress::Bar,
-    random::{self},
+    random::{self, Randomizer},
     time::{Jiffies, timer_manager::TimerManager},
     topology::{HandlerMap, LatencyTopology, PoolListing, Topology},
 };
@@ -38,7 +38,12 @@ impl Simulation {
         let timers_actor = Rc::new(RefCell::new(TimerManager::New(topology.clone())));
 
         global::configuration::SetupGlobalConfiguration(topology.Size());
-        global::SetupAccess(network_actor.clone(), timers_actor.clone(), pool_listing);
+        global::SetupAccess(
+            network_actor.clone(),
+            timers_actor.clone(),
+            topology,
+            Randomizer::New(seed),
+        );
 
         let actors = vec![network_actor as SharedActor, timers_actor as SharedActor];
 

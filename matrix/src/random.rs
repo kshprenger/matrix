@@ -1,4 +1,4 @@
-use rand::{Rng, SeedableRng, distr::Uniform};
+use rand::{Rng, SeedableRng, distr::Uniform, seq::IndexedRandom};
 use rand_distr::{Bernoulli, Normal};
 
 use crate::Jiffies;
@@ -23,7 +23,7 @@ impl Randomizer {
         }
     }
 
-    pub fn Random(&mut self, d: Distributions) -> usize {
+    pub fn RandomLatency(&mut self, d: Distributions) -> usize {
         match d {
             Distributions::Uniform(Jiffies(from), Jiffies(to)) => {
                 let distr = Uniform::new_inclusive(from, to).expect("Invalid bounds");
@@ -38,5 +38,11 @@ impl Randomizer {
                 self.rnd.sample(distr).max(0.0).round() as usize
             }
         }
+    }
+
+    pub fn ChooseFromSlice<'a, T: Copy>(&mut self, from: &[T]) -> T {
+        from.choose(&mut self.rnd)
+            .copied()
+            .expect("Chose from empty slice")
     }
 }

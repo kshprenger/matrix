@@ -80,13 +80,6 @@ impl ProcessHandle for Client {
 }
 
 impl Client {
-    fn ChooseServer(&mut self) -> ProcessId {
-        ListPool("Replicas")
-            .choose(self.rng.as_mut().unwrap())
-            .copied()
-            .unwrap()
-    }
-
     fn ChooseKey(&mut self) -> Key {
         self.keypool
             .choose(self.rng.as_mut().unwrap())
@@ -117,7 +110,7 @@ impl Client {
     }
 
     fn DoRandomOperation(&mut self) {
-        let target = self.ChooseServer();
+        let target = ChooseFromPool("Replicas");
         let operation = self.ChooseOperation();
         SendTo(target, operation);
         Debug!("Sent operation to {target}");
