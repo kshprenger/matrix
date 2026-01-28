@@ -27,4 +27,5 @@ pub(crate) fn Drop() {
     clock::Drop();
     tso::Drop();
     anykv::Drop();
+    access::Drop();
 }

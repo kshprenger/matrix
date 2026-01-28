@@ -109,6 +109,10 @@ thread_local! {
     pub(crate) static ACCESS_HANDLE: RefCell<Option<SimulationAccess>> = RefCell::new(None);
 }
 
+pub(crate) fn Drop() {
+    ACCESS_HANDLE.take();
+}
+
 pub(crate) fn SetupAccess(
     network: NetworkActor,
     timers: TimerManagerActor,
