@@ -14,14 +14,14 @@ use matrix::{
 use rand::{SeedableRng, rngs::StdRng};
 
 use crate::{
-    consistent_broadcast::{BCBMessage, ByzantineConsistentBroadcast},
+    consistent_broadcast::{BCBMessage, ByzantineConsistentBroadcast, ID_SIZE},
     dag_utils::{RoundBasedDAG, SameVertex, Vertex, VertexPtr},
 };
 
 #[derive(Clone)]
 pub enum SparseBullsharkMessage {
-    Vertex(VertexPtr),
-    Genesis(VertexPtr),
+    Vertex((usize, VertexPtr)),
+    Genesis((usize, VertexPtr)),
 }
 
 impl Message for SparseBullsharkMessage {
@@ -29,8 +29,12 @@ impl Message for SparseBullsharkMessage {
         // Round, ProcessId
         4 + 4
             + match self {
-                SparseBullsharkMessage::Genesis(v) => v.strong_edges.len() * 32, // sha256 block pointers
-                SparseBullsharkMessage::Vertex(v) => v.strong_edges.len() * 32, // sha256 block pointers
+                SparseBullsharkMessage::Genesis((proc_num, v)) => {
+                    v.strong_edges.len() * ((proc_num / 8) + ID_SIZE)
+                }
+                SparseBullsharkMessage::Vertex((proc_num, v)) => {
+                    v.strong_edges.len() * ((proc_num / 8) + ID_SIZE)
+                }
             }
     }
 }
@@ -82,21 +86,24 @@ impl ProcessHandle for SparseBullshark {
         });
 
         self.rbcast
-            .ReliablyBroadcast(SparseBullsharkMessage::Genesis(genesis_vertex));
+            .ReliablyBroadcast(SparseBullsharkMessage::Genesis((
+                self.proc_num,
+                genesis_vertex,
+            )));
     }
 
     // DAG construction: part 1
     fn OnMessage(&mut self, from: ProcessId, message: MessagePtr) {
         if let Some(bs_message) = self.rbcast.Process(from, message.As::<BCBMessage>()) {
             match bs_message.As::<SparseBullsharkMessage>().as_ref() {
-                SparseBullsharkMessage::Genesis(v) => {
+                SparseBullsharkMessage::Genesis((_, v)) => {
                     debug_assert!(v.round == 0);
                     self.dag.AddVertex(v.clone());
                     self.TryAdvanceRound();
                     return;
                 }
 
-                SparseBullsharkMessage::Vertex(v) => {
+                SparseBullsharkMessage::Vertex((_, v)) => {
                     if self.BadVertex(v, from) {
                         return;
                     }
@@ -254,7 +261,7 @@ impl SparseBullshark {
     }
 
     fn StartTimer(&mut self) {
-        self.current_timer = ScheduleTimerAfter(Jiffies(200));
+        self.current_timer = ScheduleTimerAfter(Jiffies(10000));
         self.wait = true;
     }
 }
@@ -273,7 +280,7 @@ impl SparseBullshark {
         let v = self.CreateVertex(round);
         self.TryAddToDAG(v.clone());
         self.rbcast
-            .ReliablyBroadcast(SparseBullsharkMessage::Vertex(v));
+            .ReliablyBroadcast(SparseBullsharkMessage::Vertex((self.proc_num, v)));
     }
 
     fn TryAddToDAG(&mut self, v: VertexPtr) -> bool {
