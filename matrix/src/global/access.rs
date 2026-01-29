@@ -98,7 +98,7 @@ impl SimulationAccess {
         self.process_on_execution = id
     }
 
-    fn CurrentId(&self) -> ProcessId {
+    fn Rank(&self) -> ProcessId {
         self.process_on_execution
     }
 }
@@ -159,8 +159,8 @@ pub fn SendRandomFromPool(pool: &'static str, message: impl Message + 'static) {
     WithAccess(|access| access.SendRandomFromPool(pool, message));
 }
 
-pub fn CurrentId() -> ProcessId {
-    WithAccess(|access| access.CurrentId())
+pub fn Rank() -> ProcessId {
+    WithAccess(|access| access.Rank())
 }
 
 pub fn ListPool(name: &str) -> Vec<ProcessId> {
@@ -175,6 +175,6 @@ pub fn ChooseFromPool(name: &str) -> ProcessId {
 #[macro_export]
 macro_rules! Debug {
     ($($arg:tt)+) => {
-        log::debug!("[Now: {} | P{}] {}", Now(), CurrentId(), format_args!($($arg)+));
+        log::debug!("[Now: {} | P{}] {}", Now(), Rank(), format_args!($($arg)+));
     }
 }

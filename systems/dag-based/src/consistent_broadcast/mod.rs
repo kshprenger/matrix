@@ -6,7 +6,7 @@ use std::{
     rc::Rc,
 };
 
-use matrix::{Broadcast, CurrentId, Message, MessagePtr, ProcessId, SendTo};
+use matrix::{Broadcast, Message, MessagePtr, ProcessId, Rank, SendTo};
 
 use crate::consistent_broadcast::message::BCBMessageId;
 
@@ -48,7 +48,7 @@ impl ByzantineConsistentBroadcast {
     }
 
     pub(crate) fn Start(&mut self, proc_num: usize) {
-        self.process_id = CurrentId();
+        self.process_id = Rank();
         self.proc_num = proc_num;
     }
 

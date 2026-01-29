@@ -40,7 +40,7 @@ pub struct DAGRider {
 
 impl ProcessHandle for DAGRider {
     fn Start(&mut self) {
-        self.self_id = CurrentId();
+        self.self_id = Rank();
         self.proc_num = configuration::ProcessNumber();
         self.dag.SetRoundSize(configuration::ProcessNumber());
         self.rbcast.Start(configuration::ProcessNumber());

@@ -54,7 +54,7 @@ impl ProcessHandle for Client {
 
     fn OnMessage(&mut self, from: matrix::ProcessId, message: matrix::MessagePtr) {
         let response = message.As::<ClientResponse>();
-        self.current_op.client = CurrentId();
+        self.current_op.client = Rank();
         self.current_op.end = Now();
         match *response {
             ClientResponse::GetResponse(value) => {

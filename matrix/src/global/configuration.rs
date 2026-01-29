@@ -1,4 +1,4 @@
-use crate::{CurrentId, ProcessId, global::anykv, random::Seed};
+use crate::{ProcessId, Rank, global::anykv, random::Seed};
 
 pub(crate) fn SetupGlobalConfiguration(proc_num: usize) {
     anykv::Set::<usize>("proc_num", proc_num)
@@ -10,7 +10,7 @@ pub(crate) fn SetupLocalConfiguration(id: ProcessId, base_seed: Seed) {
 }
 
 pub fn Seed() -> Seed {
-    anykv::Get::<u64>(&format!("seeds/{}", CurrentId()))
+    anykv::Get::<u64>(&format!("seeds/{}", Rank()))
 }
 
 pub fn ProcessNumber() -> usize {

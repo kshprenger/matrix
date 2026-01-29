@@ -11,6 +11,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        binary: [pingpong, timer_demo, broadcast, multidc_pingpong]
 
     steps:
       - name: Checkout code
@@ -46,6 +49,6 @@ jobs:
             ${{ runner.os }}-cargo-target-
 
       - name: Verify Matrix
-        run: RUST_LOG=info cargo run --bin pingpong --release
+        run: RUST_LOG=info cargo run --bin ${{ matrix.binary }} --release --package examples
         env:
           RUST_LOG: info

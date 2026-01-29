@@ -76,7 +76,7 @@ impl ProcessHandle for SparseBullshark {
         // Shared genesis vertices
         let genesis_vertex = VertexPtr::new(Vertex {
             round: 0,
-            source: CurrentId(),
+            source: Rank(),
             strong_edges: Vec::new(),
             creation_time: Now(),
         });
@@ -212,7 +212,7 @@ impl SparseBullshark {
             .collect::<BTreeSet<VertexPtr>>();
 
         // Try add myself
-        if let Some(me) = self.dag[round][CurrentId()].clone() {
+        if let Some(me) = self.dag[round][Rank()].clone() {
             random_candidates.insert(me);
         }
 
@@ -234,7 +234,7 @@ impl SparseBullshark {
         // Infinite source of client txns
         VertexPtr::new(Vertex {
             round,
-            source: CurrentId(),
+            source: Rank(),
             strong_edges: self.SampleRandomCandidates(round - 1),
             creation_time: Now(),
         })

@@ -5,7 +5,7 @@ use std::{
 };
 
 use matrix::{
-    CurrentId, Now, ProcessId,
+    Now, ProcessId, Rank,
     global::anykv,
     time::{self},
 };
@@ -96,7 +96,7 @@ impl RoundBasedDAG {
                     continue;
                 } else {
                     self.ordered[real_round][edge.source] = true;
-                    if CurrentId() == edge.source {
+                    if Rank() == edge.source {
                         anykv::Modify::<(f64, usize)>(
                             "avg_latency",
                             |(prev_avg_latency, prev_total_ordered)| {

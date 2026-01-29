@@ -179,6 +179,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "examples"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "matrix",
+ "rand",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -334,14 +343,6 @@ name = "once_cell_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
-
-[[package]]
-name = "pingpong"
-version = "0.1.0"
-dependencies = [
- "log",
- "matrix",
-]
 
 [[package]]
 name = "portable-atomic"
