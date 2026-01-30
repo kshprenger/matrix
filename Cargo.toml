@@ -1,3 +1,9 @@
 [workspace]
 resolver = "3"
 members = ["systems/*", "matrix"]
+
+[profile.release]
+lto = "fat"           # Link Time Optimization: enables cross-crate optimizations
+codegen-units = 1     # Reduces parallelism in code generation for better optimization
+panic = "abort"       # Removes stack unwinding code, slightly smaller and faster binary
+opt-level = 3         # Maximum optimization
