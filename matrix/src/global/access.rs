@@ -86,12 +86,16 @@ impl SimulationAccess {
     }
 
     fn Drain(&mut self) {
-        self.network
-            .borrow_mut()
-            .SubmitMessages(&mut self.scheduled_messages);
-        self.timers
-            .borrow_mut()
-            .ScheduleTimers(&mut self.scheduled_timers);
+        if !self.scheduled_messages.is_empty() {
+            self.network
+                .borrow_mut()
+                .SubmitMessages(&mut self.scheduled_messages);
+        }
+        if !self.scheduled_timers.is_empty() {
+            self.timers
+                .borrow_mut()
+                .ScheduleTimers(&mut self.scheduled_timers);
+        }
     }
 
     fn SetProcess(&mut self, id: ProcessId) {
