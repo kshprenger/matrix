@@ -9,7 +9,7 @@ use rayon::prelude::*;
 use std::io::Write;
 
 fn main() {
-    let k_validators = 1000;
+    let k_validators = 2000;
     let thresholds = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
 
     thresholds.into_iter().for_each(|threshold| {
@@ -18,9 +18,9 @@ fn main() {
         );
 
         let seeds = [4567898765, 33333, 982039, 1, 234567890];
-        // 5% to quorum by 5 % step
+        // 5% -> quorum ; by 5% step
         let samples = (((k_validators as f64 * 0.05) as usize)
-            ..=((k_validators as f64 * 0.66) as usize))
+            ..=((k_validators as f64 * 0.67) as usize))
             .step_by((k_validators as f64 * 0.05) as usize);
         let product = samples.flat_map(|x| seeds.iter().map(move |y| (x, y)));
 
@@ -35,8 +35,8 @@ fn main() {
                     "Validators",
                     Distributions::Normal(Jiffies(50), Jiffies(10)),
                 )])
-                .TimeBudget(Jiffies(3600_000)) // Simulating hour of real time execution
-                .NICBandwidth(BandwidthDescription::Bounded(10 * 1024 * 1024 / (8 * 1000)))
+                .TimeBudget(Jiffies(7200_000)) // Simulating 2 hours of real time execution
+                .NICBandwidth(BandwidthDescription::Bounded(5 * 1024 * 1024 / (8 * 1000)))
                 .Seed(*seed)
                 .Build();
 
