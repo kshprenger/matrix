@@ -5,12 +5,14 @@ use std::{
 };
 
 use matrix::{
-    Now, ProcessId, Rank,
-    global::anykv,
+    Message, Now, ProcessId, Rank,
+    global::{anykv, configuration::ProcessNumber},
     time::{self},
 };
 
-const GC_REMAIN: usize = 40;
+use crate::consistent_broadcast::ID_SIZE;
+
+const GC_REMAIN: usize = usize::MAX;
 
 pub type VertexPtr = Rc<Vertex>;
 type Round = Vec<Option<VertexPtr>>;
@@ -28,7 +30,7 @@ pub struct Vertex {
     // Each party contains strong Rc references to vertices in their dags.
     // At the same time in the real dag edges are represented with weak Rc references.
     // Once all parties GC-ed their dags, Vertices will be deallocated because there will be no more strong Rc references.
-    // Until GC time is is safe for the process to upgrade Weak refs.
+    // Until GC time is is safe for the process to upgrade Weak refs traversing dag backwards.
     pub strong_edges: Vec<Weak<Vertex>>,
 }
 
@@ -58,6 +60,28 @@ impl PartialOrd for Vertex {
 impl Ord for Vertex {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         (self.round, self.source).cmp(&(other.round, other.source))
+    }
+}
+
+fn CertificateSize() -> usize {
+    (ProcessNumber() / 8) + ID_SIZE
+}
+
+#[derive(Clone)]
+pub enum VertexMessage {
+    Vertex(VertexPtr),
+    Genesis(VertexPtr),
+}
+
+impl Message for VertexMessage {
+    fn VirtualSize(&self) -> usize {
+        // Round, ProcessId
+        4 + 4
+            + CertificateSize()
+                * match self {
+                    VertexMessage::Genesis(v) => v.strong_edges.len(),
+                    VertexMessage::Vertex(v) => v.strong_edges.len(),
+                }
     }
 }
 

@@ -14,15 +14,15 @@ pub enum BCBMessage {
     Certificate(usize, BCBMessageId),
 }
 
-const ID_SIZE: usize = 128;
-const SIG_SIZE: usize = 64; // For example Ed25519 or Secp256k1
+pub const ID_SIZE: usize = 128;
+pub const SIG_SIZE: usize = 64; // For example Ed25519 or Secp256k1
 
 impl Message for BCBMessage {
     fn VirtualSize(&self) -> usize {
         match self {
             BCBMessage::Initiate((_, m)) => ID_SIZE + m.VirtualSize(),
             BCBMessage::Signature(_) => SIG_SIZE,
-            BCBMessage::Certificate(quorum_size, _) => quorum_size * SIG_SIZE,
+            BCBMessage::Certificate(k_validators, _) => ID_SIZE + (k_validators / 8),
         }
     }
 }

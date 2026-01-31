@@ -10,25 +10,8 @@ use matrix::{global::configuration, *};
 
 use crate::{
     consistent_broadcast::{BCBMessage, ByzantineConsistentBroadcast},
-    dag_utils::{RoundBasedDAG, SameVertex, Vertex, VertexPtr},
+    dag_utils::{RoundBasedDAG, SameVertex, Vertex, VertexMessage, VertexPtr},
 };
-
-#[derive(Clone)]
-pub enum BullsharkMessage {
-    Vertex(VertexPtr),
-    Genesis(VertexPtr),
-}
-
-impl Message for BullsharkMessage {
-    fn VirtualSize(&self) -> usize {
-        // Round, ProcessId
-        4 + 4
-            + match self {
-                BullsharkMessage::Genesis(v) => v.strong_edges.len() * 32, // sha256 block pointers
-                BullsharkMessage::Vertex(v) => v.strong_edges.len() * 32,  // sha256 block pointers
-            }
-    }
-}
 
 pub struct Bullshark {
     rbcast: ByzantineConsistentBroadcast,
@@ -76,14 +59,14 @@ impl ProcessHandle for Bullshark {
         });
 
         self.rbcast
-            .ReliablyBroadcast(BullsharkMessage::Genesis(genesis_vertex));
+            .ReliablyBroadcast(VertexMessage::Genesis(genesis_vertex));
     }
 
     // DAG construction: part 1
     fn OnMessage(&mut self, from: ProcessId, message: MessagePtr) {
         if let Some(bs_message) = self.rbcast.Process(from, message.As::<BCBMessage>()) {
-            match bs_message.As::<BullsharkMessage>().as_ref() {
-                BullsharkMessage::Genesis(v) => {
+            match bs_message.As::<VertexMessage>().as_ref() {
+                VertexMessage::Genesis(v) => {
                     Debug!("Got genesis");
                     debug_assert!(v.round == 0);
                     self.dag.AddVertex(v.clone());
@@ -91,7 +74,7 @@ impl ProcessHandle for Bullshark {
                     return;
                 }
 
-                BullsharkMessage::Vertex(v) => {
+                VertexMessage::Vertex(v) => {
                     Debug!("Got vertex from: {from}");
 
                     // Validity check
@@ -219,7 +202,7 @@ impl Bullshark {
     }
 
     fn StartTimer(&mut self) {
-        self.current_timer = ScheduleTimerAfter(Jiffies(2000));
+        self.current_timer = ScheduleTimerAfter(Jiffies(10000));
         Debug!("New timer scheduled: {}", self.current_timer);
         self.wait = true;
     }
@@ -239,7 +222,7 @@ impl Bullshark {
     fn BroadcastVertex(&mut self, round: usize) {
         let v = self.CreateVertex(round);
         self.TryAddToDAG(v.clone());
-        self.rbcast.ReliablyBroadcast(BullsharkMessage::Vertex(v));
+        self.rbcast.ReliablyBroadcast(VertexMessage::Vertex(v));
     }
 
     fn TryAddToDAG(&mut self, v: VertexPtr) -> bool {

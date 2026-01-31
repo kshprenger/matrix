@@ -62,7 +62,7 @@ impl Simulation {
         }
 
         // For small simulations progress bar is not fullfilling
-        self.progress_bar.MakeProgress(self.time_budget);
+        self.progress_bar.Finish();
 
         info!("Looks good! ヽ(‘ー`)ノ");
     }
