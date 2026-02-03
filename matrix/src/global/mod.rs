@@ -17,7 +17,7 @@ pub use access::ScheduleTimerAfter;
 pub use access::SendRandomFromPool;
 pub use access::SendTo;
 
-pub(crate) use access::Drain;
+pub(crate) use access::Schedule;
 pub(crate) use access::SetProcess;
 pub(crate) use access::SetupAccess;
 

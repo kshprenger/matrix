@@ -62,7 +62,7 @@ impl Simulation {
         }
 
         // For small simulations progress bar is not fullfilling
-        self.progress_bar.MakeProgress(self.time_budget);
+        self.progress_bar.Finish();
 
         info!("Looks good! ヽ(‘ー`)ノ");
     }
@@ -72,7 +72,7 @@ impl Simulation {
     fn Start(&mut self) {
         self.actors.iter_mut().for_each(|actor| {
             actor.borrow_mut().Start();
-            global::Drain(); // Only after Start() to avoid double borrow_mut() of SharedActor
+            global::Schedule(); // Only after Start() to avoid double borrow_mut() of SharedActor
         });
     }
 
@@ -85,7 +85,7 @@ impl Simulation {
             Some((future, actor)) => {
                 global::FastForwardClock(future);
                 actor.borrow_mut().Step();
-                global::Drain(); // Only after Step() to avoid double borrow_mut() of SharedActor
+                global::Schedule(); // Only after Step() to avoid double borrow_mut() of SharedActor
                 self.progress_bar.MakeProgress(future.min(self.time_budget));
             }
         }

@@ -138,7 +138,7 @@ pub(crate) fn SetProcess(id: ProcessId) {
     WithAccess(|access| access.SetProcess(id));
 }
 
-pub(crate) fn Drain() {
+pub(crate) fn Schedule() {
     WithAccess(|access| access.Drain());
 }
 
