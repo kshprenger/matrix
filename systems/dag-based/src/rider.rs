@@ -9,22 +9,10 @@ use matrix::{global::configuration, *};
 
 use crate::{
     consistent_broadcast::{BCBMessage, ByzantineConsistentBroadcast},
-    dag_utils::{RoundBasedDAG, SameVertex, Vertex, VertexPtr},
+    dag_utils::{RoundBasedDAG, SameVertex, Vertex, VertexMessage, VertexPtr},
 };
 
-#[derive(Clone)]
-pub enum DAGRiderMessage {
-    Vertex(VertexPtr),
-    Genesis(VertexPtr),
-}
-
 const CONSTRUCTING_ROUTINE_INTERVAL: Jiffies = Jiffies(500);
-
-impl Message for DAGRiderMessage {
-    fn VirtualSize(&self) -> usize {
-        0
-    }
-}
 
 #[derive(Default)]
 pub struct DAGRider {
@@ -58,19 +46,19 @@ impl ProcessHandle for DAGRider {
         self.dag.AddVertex(genesis_vertex.clone());
 
         self.rbcast
-            .ReliablyBroadcast(DAGRiderMessage::Genesis(genesis_vertex));
+            .ReliablyBroadcast(VertexMessage::Genesis(genesis_vertex));
     }
 
     fn OnMessage(&mut self, from: ProcessId, message: MessagePtr) {
         if let Some(bs_message) = self.rbcast.Process(from, message.As::<BCBMessage>()) {
-            match bs_message.As::<DAGRiderMessage>().as_ref() {
-                DAGRiderMessage::Genesis(v) => {
+            match bs_message.As::<VertexMessage>().as_ref() {
+                VertexMessage::Genesis(v) => {
                     debug_assert!(v.round == 0);
                     self.dag.AddVertex(v.clone());
                     return;
                 }
 
-                DAGRiderMessage::Vertex(v) => {
+                VertexMessage::Vertex(v) => {
                     if self.BadVertex(&v, from) {
                         return;
                     }
@@ -121,7 +109,7 @@ impl DAGRider {
             self.round += 1;
             let v = self.CreateVertex(self.round);
             self.dag.AddVertex(v.clone());
-            self.rbcast.ReliablyBroadcast(DAGRiderMessage::Vertex(v));
+            self.rbcast.ReliablyBroadcast(VertexMessage::Vertex(v));
         }
     }
 }

@@ -37,7 +37,7 @@ impl Bar {
         let d = time.0 / self.delta;
         if d > self.prev_log {
             self.prev_log = d;
-            self.bar.set_position(time.0 as u64)
+            self.bar.set_position(time.0 as u64);
         }
     }
 

@@ -9,22 +9,25 @@ use rayon::prelude::*;
 use std::io::Write;
 
 fn main() {
-    let k_validators = 1000;
-    let mb_per_sec = [5, 10, 20];
+    let k_validators = 2000;
+    let thresholds = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
 
-    mb_per_sec.into_iter().for_each(|bandwidth| {
-        let file = Mutex::new(File::create(format!("sparse_bullshark_{}.csv", bandwidth)).unwrap());
+    thresholds.into_iter().for_each(|threshold| {
+        let file = Mutex::new(
+            File::create(format!("sparse_bullshark_threshold_{}.csv", threshold)).unwrap(),
+        );
 
-        let seeds = [4567898765, 33333, 982039, 1, 234567890];
-        // 5% to quorum by 5 % step
+        let seeds = [1, 2, 3];
+        // 5% -> quorum ; by 5% step
         let samples = (((k_validators as f64 * 0.05) as usize)
-            ..=((k_validators as f64 * 0.66) as usize))
+            ..=((k_validators as f64 * 0.67) as usize))
             .step_by((k_validators as f64 * 0.05) as usize);
         let product = samples.flat_map(|x| seeds.iter().map(move |y| (x, y)));
 
         product.par_bridge().into_par_iter().for_each(|(d, seed)| {
             anykv::Set::<(f64, usize)>("avg_latency", (0.0, 0));
             anykv::Set::<usize>("D", d); // Sample size
+            anykv::Set::<f64>("threshold", threshold); // xf + 1
 
             let mut sim = SimulationBuilder::NewDefault()
                 .AddPool::<SparseBullshark>("Validators", k_validators)
@@ -32,10 +35,8 @@ fn main() {
                     "Validators",
                     Distributions::Normal(Jiffies(50), Jiffies(10)),
                 )])
-                .TimeBudget(Jiffies(3600_000)) // Simulating hour of real time execution
-                .NICBandwidth(BandwidthDescription::Bounded(
-                    bandwidth * 1024 * 1024 / (8 * 1000), // bandwidth Mb/sec NICs
-                ))
+                .TimeBudget(Jiffies(36000_000)) // Simulating 10 hours of real time execution
+                .NICBandwidth(BandwidthDescription::Bounded(5 * 1024 * 1024 / (8 * 1000)))
                 .Seed(*seed)
                 .Build();
 
