@@ -1,7 +1,18 @@
 [package]
 name = "dscale"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+authors = ["Konstantin Shprenger <konstantin@shprenger.com>"]
+license = "MIT"
+description = "A fast & deterministic simulation framework for testing and benchmarking distributed systems"
+repository = "https://github.com/kshprenger/dscale"
+homepage = "https://github.com/kshprenger/dscale"
+documentation = "https://docs.rs/dscale"
+readme = "../README.md"
+keywords = ["simulation", "distributed-systems", "testing", "network", "deterministic"]
+categories = ["simulation", "development-tools::testing", "network-programming"]
+
+
 
 [dependencies]
 env_logger = "0.11.8"
