@@ -85,8 +85,9 @@ impl ProcessHandle for SparseBullshark {
                     }
 
                     // Try to drain stalled vertices first
-                    let vertices_in_the_buffer =
+                    let mut vertices_in_the_buffer =
                         self.buffer.iter().cloned().collect::<Vec<VertexPtr>>();
+                    vertices_in_the_buffer.sort_by_key(|v| v.round);
                     vertices_in_the_buffer.into_iter().for_each(|v| {
                         self.TryAddToDAG(v);
                     });
@@ -215,12 +216,20 @@ impl SparseBullshark {
 
     fn CreateVertex(&mut self, round: usize) -> VertexPtr {
         // Infinite source of client txns
-        VertexPtr::new(Vertex {
+        let vertex = VertexPtr::new(Vertex {
             round,
             source: Rank(),
             strong_edges: self.SampleRandomCandidates(round - 1),
             creation_time: Now(),
-        })
+        });
+
+        let virtual_size = VertexMessage::Vertex(vertex.clone()).VirtualSize();
+        anykv::Modify::<(f64, usize)>("avg_virtual_size", |(avg, count)| {
+            *avg = (virtual_size as f64 + (*avg * *count as f64)) / (*count + 1) as f64;
+            *count += 1;
+        });
+
+        vertex
     }
 
     fn BadVertex(&self, v: &VertexPtr, from: ProcessId) -> bool {

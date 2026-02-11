@@ -3,9 +3,10 @@ use std::{cell::RefCell, process::exit, rc::Rc, usize};
 use log::{error, info};
 
 use crate::{
+    Now,
     actor::SharedActor,
-    global,
-    network::{BandwidthDescription, Network},
+    global::{self, anykv},
+    network::{BandwidthDescription, Network, NetworkActor},
     progress::Bar,
     random::{self, Randomizer},
     time::{Jiffies, timer_manager::TimerManager},
@@ -14,6 +15,7 @@ use crate::{
 
 pub struct Simulation {
     actors: Vec<SharedActor>,
+    network_handle: NetworkActor, // for stats at end
     time_budget: Jiffies,
     progress_bar: Bar,
 }
@@ -45,11 +47,12 @@ impl Simulation {
             Randomizer::New(seed),
         );
 
-        let actors: Vec<SharedActor> = vec![network_actor, timers_actor];
+        let actors: Vec<SharedActor> = vec![network_actor.clone(), timers_actor];
 
         Self {
             actors,
             time_budget,
+            network_handle: network_actor.clone(),
             progress_bar: Bar::New(time_budget),
         }
     }
@@ -63,6 +66,11 @@ impl Simulation {
 
         // For small simulations progress bar is not fullfilling
         self.progress_bar.Finish();
+
+        anykv::Set::<usize>(
+            "avg_network_load",
+            self.network_handle.borrow().GetAvgTotalPasedBytes() / Now().0,
+        );
 
         info!("Looks good! ヽ(‘ー`)ノ");
     }

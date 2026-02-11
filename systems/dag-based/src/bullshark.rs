@@ -82,9 +82,10 @@ impl ProcessHandle for Bullshark {
                         return;
                     }
 
-                    // Try to drain stalled vertices first
-                    let vertices_in_the_buffer =
+                    // Try to drain stalled vertices first (in sorted order)
+                    let mut vertices_in_the_buffer =
                         self.buffer.iter().cloned().collect::<Vec<VertexPtr>>();
+                    vertices_in_the_buffer.sort_by_key(|v| v.round);
                     vertices_in_the_buffer.into_iter().for_each(|v| {
                         self.TryAddToDAG(v);
                     });

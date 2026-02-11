@@ -108,6 +108,10 @@ impl Network {
                 self.SubmitSingleMessage(message, from, destination);
             });
     }
+
+    pub(crate) fn GetAvgTotalPasedBytes(&self) -> usize {
+        self.bandwidth_queue.GetAvgTotalPasedBytes()
+    }
 }
 
 impl SimulationActor for Network {

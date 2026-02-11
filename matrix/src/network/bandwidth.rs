@@ -3,6 +3,7 @@ use std::collections::BinaryHeap;
 use log::debug;
 
 use crate::{
+    Now,
     communication::{RoutedMessage, TimePriorityMessageQueue},
     network::LatencyQueue,
     time::Jiffies,
@@ -17,7 +18,7 @@ pub enum BandwidthDescription {
 pub(crate) struct BandwidthQueue {
     bandwidth: usize,
     global_queue: LatencyQueue,
-    current_buffers_sizes: Vec<usize>,
+    total_pased: Vec<usize>,
     merged_fifo_buffers: TimePriorityMessageQueue,
 }
 
@@ -35,7 +36,7 @@ impl BandwidthQueue {
         Self {
             bandwidth,
             global_queue,
-            current_buffers_sizes: vec![0; proc_num + 1],
+            total_pased: vec![0; proc_num + 1],
             merged_fifo_buffers: BinaryHeap::new(),
         }
     }
@@ -61,6 +62,10 @@ impl BandwidthQueue {
                 }
             }
         }
+    }
+
+    pub(crate) fn GetAvgTotalPasedBytes(&self) -> usize {
+        self.total_pased.iter().sum::<usize>() / self.total_pased.len()
     }
 
     pub(crate) fn PeekClosest(&self) -> Option<Jiffies> {
@@ -89,22 +94,19 @@ impl BandwidthQueue {
             .global_queue
             .Pop()
             .expect("Global queue should not be empty");
-        self.current_buffers_sizes[message.step.dest] += message.step.message.VirtualSize();
-        debug!(
-            "New process {} buffer's size: {}",
-            message.step.dest, self.current_buffers_sizes[message.step.dest]
-        );
-        debug!(
-            "Message arrival time before bandwidth adjustment: {}",
-            message.arrival_time
-        );
-        message.arrival_time +=
-            Jiffies(self.current_buffers_sizes[message.step.dest] / self.bandwidth);
-        debug!(
-            "Message arrival time after bandwidth adjustment: {}",
-            message.arrival_time
-        );
-        self.merged_fifo_buffers.push(std::cmp::Reverse(message));
+
+        if self.bandwidth == usize::MAX {
+            self.merged_fifo_buffers.push(std::cmp::Reverse(message));
+        } else {
+            let new_total =
+                self.total_pased[message.step.dest] + message.step.message.VirtualSize();
+
+            if new_total > Now().0 * self.bandwidth {
+                message.arrival_time = Jiffies(new_total / self.bandwidth); // > Now()
+            }
+
+            self.merged_fifo_buffers.push(std::cmp::Reverse(message));
+        }
     }
 
     fn DeliverFromBuffer(&mut self) -> Option<RoutedMessage> {
@@ -113,11 +115,7 @@ impl BandwidthQueue {
             .pop()
             .expect("All buffers should not be empty")
             .0;
-        self.current_buffers_sizes[message.step.dest] -= message.step.message.VirtualSize();
-        debug!(
-            "New process {} buffer's size: {}",
-            message.step.dest, self.current_buffers_sizes[message.step.dest]
-        );
+        self.total_pased[message.step.dest] += message.step.message.VirtualSize();
         Some(message)
     }
 
