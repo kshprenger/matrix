@@ -6,7 +6,7 @@ use std::{
     rc::Rc,
 };
 
-use matrix::{Broadcast, Message, MessagePtr, ProcessId, Rank, SendTo};
+use dscale::{Broadcast, Message, MessagePtr, ProcessId, Rank, SendTo};
 
 use crate::consistent_broadcast::message::BCBMessageId;
 

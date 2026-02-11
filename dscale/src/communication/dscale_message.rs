@@ -1,6 +1,6 @@
 use crate::{MessagePtr, TimerId};
 
-pub(crate) enum MatrixMessage {
+pub(crate) enum DScaleMessage {
     NetworkMessage(MessagePtr),
     Timer(TimerId),
 }

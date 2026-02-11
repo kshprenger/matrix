@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use matrix::{Message, ProcessId};
+use dscale::{Message, ProcessId};
 
 #[derive(Clone, PartialEq, Eq, Hash, Copy)]
 pub struct BCBMessageId {

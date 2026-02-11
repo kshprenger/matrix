@@ -6,7 +6,7 @@ use std::{
     rc::{Rc, Weak},
 };
 
-use matrix::{global::configuration, *};
+use dscale::{global::configuration, *};
 
 use crate::{
     consistent_broadcast::{BCBMessage, ByzantineConsistentBroadcast},

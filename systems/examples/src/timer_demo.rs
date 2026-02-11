@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-use matrix::{global::anykv, *};
+use dscale::{global::anykv, *};
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub enum LazyPingPongMessage {

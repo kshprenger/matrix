@@ -5,7 +5,7 @@ pub mod types;
 
 use std::collections::HashMap;
 
-use matrix::{global::configuration::ProcessNumber, *};
+use dscale::{global::configuration::ProcessNumber, *};
 
 use crate::abd_store::{
     client::ClientReq,
@@ -36,7 +36,7 @@ impl ProcessHandle for Replica {
         self.proc_num = ProcessNumber()
     }
 
-    fn OnMessage(&mut self, from: matrix::ProcessId, message: matrix::MessagePtr) {
+    fn OnMessage(&mut self, from: dscale::ProcessId, message: dscale::MessagePtr) {
         if let Some(client_op) = message.TryAs::<ClientReq>() {
             match *client_op {
                 ClientReq::GetRequest(key) => {

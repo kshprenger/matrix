@@ -1,9 +1,9 @@
 mod destination;
-mod matrix_message;
+mod dscale_message;
 mod message;
 
 pub use destination::Destination;
-pub(crate) use matrix_message::MatrixMessage;
+pub(crate) use dscale_message::DScaleMessage;
 pub use message::Message;
 pub use message::MessagePtr;
 pub use message::ProcessStep;

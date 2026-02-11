@@ -1,5 +1,5 @@
 use dag_based::rider::DAGRider;
-use matrix::{
+use dscale::{
     BandwidthDescription, Distributions, LatencyDescription, SimulationBuilder, global::anykv,
     time::Jiffies,
 };

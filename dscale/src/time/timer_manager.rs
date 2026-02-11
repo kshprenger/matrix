@@ -5,7 +5,7 @@ use log::debug;
 use crate::{
     Now, ProcessId,
     actor::{EventSubmitter, SimulationActor},
-    communication::MatrixMessage,
+    communication::DScaleMessage,
     global,
     time::Jiffies,
     topology::Topology,
@@ -46,7 +46,7 @@ impl SimulationActor for TimerManager {
         let (_, (process_id, timer_id)) = self.working_timers.pop().expect("Should not be empty").0;
         debug!("Firing timer with TimerId {timer_id} for Process {process_id}");
         self.topo
-            .Deliver(process_id, process_id, MatrixMessage::Timer(timer_id));
+            .Deliver(process_id, process_id, DScaleMessage::Timer(timer_id));
     }
 }
 

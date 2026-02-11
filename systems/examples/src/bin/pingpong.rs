@@ -1,7 +1,7 @@
 use std::time::Instant;
 
+use dscale::{global::anykv, *};
 use examples::pingpong::PingPongProcess;
-use matrix::{global::anykv, *};
 
 fn main() {
     let mut sim = SimulationBuilder::NewDefault()

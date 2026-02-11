@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     ProcessId,
-    communication::MatrixMessage,
+    communication::DScaleMessage,
     global::SetProcess,
     process::{MutableProcessHandle, UniqueProcessHandle},
     random::Distributions,
@@ -40,12 +40,12 @@ impl Topology {
         })
     }
 
-    pub(crate) fn Deliver(&self, from: ProcessId, to: ProcessId, m: MatrixMessage) {
+    pub(crate) fn Deliver(&self, from: ProcessId, to: ProcessId, m: DScaleMessage) {
         let mut handle = self.procs.get(&to).expect("Invalid ProcessId").borrow_mut();
         SetProcess(to);
         match m {
-            MatrixMessage::NetworkMessage(ptr) => handle.OnMessage(from, ptr),
-            MatrixMessage::Timer(id) => handle.OnTimer(id),
+            DScaleMessage::NetworkMessage(ptr) => handle.OnMessage(from, ptr),
+            DScaleMessage::Timer(id) => handle.OnTimer(id),
         }
     }
 

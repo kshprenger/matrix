@@ -1,7 +1,7 @@
 use std::time::Instant;
 
+use dscale::{global::anykv, *};
 use examples::broadcast::BroadcastProcess;
-use matrix::{global::anykv, *};
 
 fn main() {
     anykv::Set::<usize>("broadcast_received", 0);

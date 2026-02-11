@@ -7,7 +7,7 @@ use std::{
     rc::{Rc, Weak},
 };
 
-use matrix::{
+use dscale::{
     global::{anykv, configuration},
     *,
 };

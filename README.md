@@ -1,17 +1,17 @@
-# Matrix
+# DScale
 
 This project provides a fast & deterministic simulation framework for testing and benchmarking distributed systems. It simulates network latency, bandwidth constraints, and process execution in a single-threaded, event-driven environment.
 
 ## Usage
 
-To use the matrix, you need to implement the `ProcessHandle` trait for your distributed system and the `Message` trait for the data exchanged between processes.
+To use the DScale, you need to implement the `ProcessHandle` trait for your distributed system and the `Message` trait for the data exchanged between processes.
 
 ### 1. Define Messages
 
 Messages must implement the `Message` trait, which allows defining a `VirtualSize` for bandwidth simulation.
 
 ```rust
-use matrix::Message;
+use dscale::Message;
 
 struct MyMessage {
     data: u32,
@@ -31,9 +31,9 @@ impl Message for MyMessage {
 Implement `ProcessHandle` to define how your process reacts to initialization, messages, and timers.
 
 ```rust
-use matrix::{ProcessHandle, ProcessId, MessagePtr, TimerId, Jiffies};
-use matrix::{Broadcast, SendTo, ScheduleTimerAfter, Rank, Debug};
-use matrix::global::configuration;
+use dscale::{ProcessHandle, ProcessId, MessagePtr, TimerId, Jiffies};
+use dscale::{Broadcast, SendTo, ScheduleTimerAfter, Rank, Debug};
+use dscale::global::configuration;
 
 #[derive(Default)]
 struct MyProcess;
@@ -63,7 +63,7 @@ impl ProcessHandle for MyProcess {
 Use `SimulationBuilder` to configure the topology, network constraints, and start the simulation.
 
 ```rust
-use matrix::{SimulationBuilder, Jiffies, BandwidthDescription, LatencyDescription, Distributions};
+use dscale::{SimulationBuilder, Jiffies, BandwidthDescription, LatencyDescription, Distributions};
 
 fn main() {
     let simulation = SimulationBuilder::NewDefault()
@@ -123,12 +123,12 @@ These functions are available globally but must be called within the context of 
 - **`ChooseFromPool(&str) -> ProcessId`**: Choose random process id from specified pool.
 - **`GlobalUniqueId() -> usize`**: Generates a globally unique ID.
 
-### Configuration (`matrix::global::configuration`)
+### Configuration (`dscale::global::configuration`)
 
 - **`Seed() -> u64`**: Returns the specific seed for the current process.
 - **`ProcessNumber() -> usize`**: Returns total number of processes in the simulation.
 
-### Any Key-Value (`matrix::global::anykv`)
+### Any Key-Value (`dscale::global::anykv`)
 
 Useful for passing shared state, metrics, or configuration between processes or back to the host.
 
@@ -142,7 +142,7 @@ Useful for passing shared state, metrics, or configuration between processes or 
 
 ## Logging Configuration (`RUST_LOG`)
 
-Matrix output is controlled via the `RUST_LOG` environment variable.
+DScale output is controlled via the `RUST_LOG` environment variable.
 
 - **`RUST_LOG=info`**: Shows high-level simulation status and a progress bar.
 - **`RUST_LOG=debug`**: Enables the `Debug!` macro output and internal simulation events.

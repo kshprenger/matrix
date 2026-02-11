@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-use matrix::{global::anykv, *};
+use dscale::{global::anykv, *};
 
 // This demo shows 2 data centers: in first one there s pingers processes,
 // in the second one - pongers processes. Pingers send ping to a single random pong process and vice versa.

@@ -1,4 +1,4 @@
-use matrix::ProcessId;
+use dscale::ProcessId;
 
 pub type Value = usize;
 pub type Key = usize;

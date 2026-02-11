@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use matrix::*;
+use dscale::*;
 
 use crate::abd_store::{
     client::ClientResponse,

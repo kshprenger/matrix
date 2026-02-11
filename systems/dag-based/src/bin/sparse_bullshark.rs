@@ -1,7 +1,7 @@
 use std::{fs::File, sync::Mutex};
 
 use dag_based::sparse_bullshark::SparseBullshark;
-use matrix::{
+use dscale::{
     BandwidthDescription, Distributions, LatencyDescription, SimulationBuilder, global::anykv,
     time::Jiffies,
 };

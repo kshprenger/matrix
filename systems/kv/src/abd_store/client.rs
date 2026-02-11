@@ -1,4 +1,4 @@
-use matrix::{
+use dscale::{
     global::{anykv, configuration},
     *,
 };
@@ -52,7 +52,7 @@ impl ProcessHandle for Client {
         ScheduleTimerAfter(Jiffies(100));
     }
 
-    fn OnMessage(&mut self, from: matrix::ProcessId, message: matrix::MessagePtr) {
+    fn OnMessage(&mut self, from: dscale::ProcessId, message: dscale::MessagePtr) {
         let response = message.As::<ClientResponse>();
         self.current_op.client = Rank();
         self.current_op.end = Now();
@@ -74,7 +74,7 @@ impl ProcessHandle for Client {
         ScheduleTimerAfter(Jiffies(100));
     }
 
-    fn OnTimer(&mut self, _id: matrix::TimerId) {
+    fn OnTimer(&mut self, _id: dscale::TimerId) {
         self.DoRandomOperation();
     }
 }

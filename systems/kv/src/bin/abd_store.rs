@@ -1,10 +1,10 @@
+use dscale::{global::anykv, *};
 use kv::abd_store::{
     Replica,
     client::{Client, ExecutionHistory},
     lin_checker::CheckLinearizable,
     types::{CLIENT_POOL_NAME, REPLICA_POOL_NAME},
 };
-use matrix::{global::anykv, *};
 
 fn main() {
     // 1 jiffy == 1ms

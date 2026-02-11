@@ -16,7 +16,7 @@ use crate::Now;
 use crate::ProcessId;
 use crate::actor::EventSubmitter;
 use crate::actor::SimulationActor;
-use crate::communication::MatrixMessage;
+use crate::communication::DScaleMessage;
 use crate::communication::ProcessStep;
 use crate::communication::RoutedMessage;
 use crate::global;
@@ -75,7 +75,7 @@ impl Network {
         self.topo.Deliver(
             source,
             dest,
-            MatrixMessage::NetworkMessage(MessagePtr::New(message)),
+            DScaleMessage::NetworkMessage(MessagePtr::New(message)),
         );
     }
 }
