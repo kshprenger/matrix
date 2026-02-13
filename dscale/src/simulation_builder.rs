@@ -12,10 +12,6 @@ use crate::{
     topology::{LatencyDescription, LatencyTopology},
 };
 
-// There are a lot of Rc small allocations, so we optimize this too using different allocator
-#[global_allocator]
-static GLOBAL_ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 fn InitLogger() {
     let _ = env_logger::Builder::from_default_env()
         .format(|buf, record| {

@@ -19,8 +19,8 @@ use crate::actor::SimulationActor;
 use crate::communication::DScaleMessage;
 use crate::communication::ProcessStep;
 use crate::communication::RoutedMessage;
-use crate::global;
 use crate::global::configuration;
+use crate::nursery::Nursery;
 use crate::random::Randomizer;
 use crate::random::Seed;
 use crate::time::Jiffies;
@@ -31,7 +31,8 @@ pub(crate) type NetworkActor = Rc<RefCell<Network>>;
 pub(crate) struct Network {
     seed: Seed,
     bandwidth_queue: BandwidthQueue,
-    topo: Rc<Topology>,
+    topology: Rc<Topology>,
+    nursery: Rc<Nursery>,
 }
 
 impl Network {
@@ -42,8 +43,10 @@ impl Network {
         destination: Destination,
     ) {
         let targets = match destination {
-            Destination::Broadcast => self.topo.Keys().copied().collect::<Vec<ProcessId>>(),
-            Destination::BroadcastWithinPool(pool_name) => self.topo.ListPool(pool_name).to_vec(),
+            Destination::Broadcast => self.nursery.Keys().copied().collect::<Vec<ProcessId>>(),
+            Destination::BroadcastWithinPool(pool_name) => {
+                self.topology.ListPool(pool_name).to_vec()
+            }
             Destination::To(to) => vec![to],
         };
 
@@ -67,15 +70,10 @@ impl Network {
         let dest = step.dest;
         let message = step.message;
 
-        debug!(
-            "Executing step for process {} | Message Source: {}",
-            dest, source
-        );
-
-        self.topo.Deliver(
+        self.nursery.Deliver(
             source,
             dest,
-            DScaleMessage::NetworkMessage(MessagePtr::New(message)),
+            DScaleMessage::NetworkMessage(MessagePtr(message)),
         );
     }
 }
@@ -84,30 +82,27 @@ impl Network {
     pub(crate) fn New(
         seed: Seed,
         bandwidth_type: BandwidthDescription,
-        topo: Rc<Topology>,
+        topology: Rc<Topology>,
+        nursery: Rc<Nursery>,
     ) -> Self {
         Self {
             seed,
             bandwidth_queue: BandwidthQueue::New(
                 bandwidth_type,
-                topo.Size(),
-                LatencyQueue::New(Randomizer::New(seed), topo.clone()),
+                nursery.Size(),
+                LatencyQueue::New(Randomizer::New(seed), topology.clone()),
             ),
-            topo,
+            topology,
+            nursery,
         }
     }
 }
 
 impl SimulationActor for Network {
     fn Start(&mut self) {
-        self.topo.IterMut().for_each(|(id, mut handle)| {
-            debug!("Executing initial step for {id}");
-
+        self.nursery.Keys().for_each(|id| {
             configuration::SetupLocalConfiguration(*id, self.seed);
-
-            global::SetProcess(*id);
-
-            handle.Start();
+            self.nursery.StartSingle(*id);
         });
     }
 

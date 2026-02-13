@@ -6,10 +6,11 @@ use crate::{
     actor::SharedActor,
     global,
     network::{BandwidthDescription, Network},
+    nursery::{HandlerMap, Nursery},
     progress::Bar,
     random::{self, Randomizer},
     time::{Jiffies, timer_manager::TimerManager},
-    topology::{HandlerMap, LatencyTopology, PoolListing, Topology},
+    topology::{LatencyTopology, PoolListing, Topology},
 };
 
 pub struct Simulation {
@@ -27,17 +28,19 @@ impl Simulation {
         pool_listing: PoolListing,
         procs: HandlerMap,
     ) -> Self {
-        let topology = Topology::NewShared(procs, pool_listing.clone(), latency_topology);
+        let topology = Topology::NewShared(pool_listing.clone(), latency_topology);
+        let nursery = Nursery::New(procs);
 
         let network_actor = Rc::new(RefCell::new(Network::New(
             seed,
             bandwidth,
             topology.clone(),
+            nursery.clone(),
         )));
 
-        let timers_actor = Rc::new(RefCell::new(TimerManager::New(topology.clone())));
+        let timers_actor = Rc::new(RefCell::new(TimerManager::New(nursery.clone())));
 
-        global::configuration::SetupGlobalConfiguration(topology.Size());
+        global::configuration::SetupGlobalConfiguration(nursery.Size());
         global::SetupAccess(
             network_actor.clone(),
             timers_actor.clone(),

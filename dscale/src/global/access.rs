@@ -173,11 +173,3 @@ pub fn ListPool(name: &str) -> Vec<ProcessId> {
 pub fn ChooseFromPool(name: &str) -> ProcessId {
     WithAccess(|access| access.ChooseFromPool(name))
 }
-
-// Userspace debugger
-#[macro_export]
-macro_rules! Debug {
-    ($($arg:tt)+) => {
-        log::debug!("[Now: {} | P{}] {}", Now(), Rank(), format_args!($($arg)+));
-    }
-}

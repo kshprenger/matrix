@@ -66,14 +66,14 @@ impl ByzantineConsistentBroadcast {
                         self.waiting_certificates.insert(*id);
                         return None;
                     }
-                    Some((message, _)) => return Some(MessagePtr::New(message)),
+                    Some((message, _)) => return Some(MessagePtr(message)),
                 }
             }
             BCBMessage::Initiate((id, m)) => {
                 if id.process_id != self.process_id {
                     if self.waiting_certificates.contains(&id) {
                         self.waiting_certificates.remove(&id);
-                        return Some(MessagePtr::New(m.clone()));
+                        return Some(MessagePtr(m.clone()));
                     }
                     self.messages.insert(*id, (m.clone(), 0));
                 }

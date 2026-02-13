@@ -9,13 +9,9 @@ pub trait Message: Any {
     }
 }
 
-pub struct MessagePtr(Rc<dyn Message>);
+pub struct MessagePtr(pub Rc<dyn Message>);
 
 impl MessagePtr {
-    pub fn New(m: Rc<dyn Message>) -> Self {
-        Self(m)
-    }
-
     pub fn TryAs<T: 'static>(&self) -> Option<Rc<T>> {
         match (self.0.clone() as Rc<dyn Any>).downcast::<T>() {
             Err(_) => None,

@@ -1,9 +1,11 @@
 #![allow(non_snake_case)]
 
 mod actor;
+mod alloc;
 mod communication;
 pub mod global;
 mod network;
+mod nursery;
 mod process;
 mod progress;
 mod random;

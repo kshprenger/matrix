@@ -7,8 +7,8 @@ use crate::{
     actor::{EventSubmitter, SimulationActor},
     communication::DScaleMessage,
     global,
+    nursery::Nursery,
     time::Jiffies,
-    topology::Topology,
 };
 
 pub type TimerId = usize;
@@ -21,14 +21,14 @@ pub(crate) type TimerManagerActor = Rc<RefCell<TimerManager>>;
 
 pub(crate) struct TimerManager {
     working_timers: BinaryHeap<Reverse<(Jiffies, (ProcessId, TimerId))>>,
-    topo: Rc<Topology>,
+    nursery: Rc<Nursery>,
 }
 
 impl TimerManager {
-    pub(crate) fn New(topo: Rc<Topology>) -> Self {
+    pub(crate) fn New(nursery: Rc<Nursery>) -> Self {
         Self {
             working_timers: BinaryHeap::new(),
-            topo,
+            nursery,
         }
     }
 }
@@ -44,8 +44,8 @@ impl SimulationActor for TimerManager {
 
     fn Step(&mut self) {
         let (_, (process_id, timer_id)) = self.working_timers.pop().expect("Should not be empty").0;
-        debug!("Firing timer with TimerId {timer_id} for Process {process_id}");
-        self.topo
+        debug!("Firing timer with TimerId {timer_id} for P{process_id}");
+        self.nursery
             .Deliver(process_id, process_id, DScaleMessage::Timer(timer_id));
     }
 }

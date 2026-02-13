@@ -2,6 +2,7 @@ mod access;
 pub mod anykv;
 pub(crate) mod clock;
 pub mod configuration;
+pub mod debug;
 pub mod tso;
 
 pub use tso::GlobalUniqueId;
