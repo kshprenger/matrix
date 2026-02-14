@@ -1,6 +1,6 @@
 use std::usize;
 
-/// Multiple value gathering (fors example for quorums).
+/// Multiple values gathering (for example for quorums).
 /// Combiner size is passed in compile time so compiler can place quorum on the stack.
 pub struct Combiner<T: Sized, const K: usize> {
     quorum: [Option<T>; K],
