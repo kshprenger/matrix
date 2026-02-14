@@ -2,6 +2,7 @@ mod actor;
 mod alloc;
 mod communication;
 pub mod global;
+pub mod helpers;
 mod network;
 mod nursery;
 mod process;
