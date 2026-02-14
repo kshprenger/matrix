@@ -78,9 +78,6 @@ thread_local! {
 ///
 /// # Thread Safety
 ///
-/// This function is thread-safe within the single-threaded simulation
-/// environment. Since DScale simulations run in a single thread, there
-/// are no race conditions to consider.
 pub fn global_unique_id() -> usize {
     TSO.replace(TSO.get() + 1)
 }
