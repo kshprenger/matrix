@@ -20,7 +20,7 @@ fn main() {
         seeds.into_par_iter().for_each(|seed| {
             anykv::set::<(f64, usize)>("avg_latency", (0.0, 0));
 
-            let mut sim = SimulationBuilder::new_default()
+            let mut sim = SimulationBuilder::default()
                 .add_pool::<Bullshark>("Validators", k_validators)
                 .latency_topology(&[LatencyDescription::WithinPool(
                     "Validators",

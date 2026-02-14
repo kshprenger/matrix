@@ -6,7 +6,7 @@ use examples::broadcast::BroadcastProcess;
 fn main() {
     anykv::set::<usize>("broadcast_received", 0);
 
-    let mut sim = SimulationBuilder::new_default()
+    let mut sim = SimulationBuilder::default()
         .add_pool::<BroadcastProcess>("BroadcastPool", 5)
         .nic_bandwidth(BandwidthDescription::Unbounded)
         .latency_topology(&[LatencyDescription::WithinPool(

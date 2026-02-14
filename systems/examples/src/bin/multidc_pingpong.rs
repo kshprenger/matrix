@@ -4,7 +4,7 @@ use dscale::{global::anykv, *};
 use examples::multidc_pingpong::{PingProcess, PongProcess};
 
 fn main() {
-    let mut sim = SimulationBuilder::new_default()
+    let mut sim = SimulationBuilder::default()
         .add_pool::<PingProcess>("Pingers", 3)
         .add_pool::<PongProcess>("Pongers", 2)
         .nic_bandwidth(BandwidthDescription::Unbounded)

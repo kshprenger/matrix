@@ -66,7 +66,7 @@ Use `Simulationbuilder` to configure the topology, network constraints, and star
 use dscale::{Simulationbuilder, Jiffies, BandwidthDescription, LatencyDescription, Distributions};
 
 fn main() {
-    let simulation = Simulationbuilder::new_default()
+    let simulation = SimulationBuilder::default()
         .add_pool::<MyProcess>("Client", 1)
         .add_pool::<MyProcess>("Server", 3)
         .latency_topology(&[
@@ -86,7 +86,7 @@ fn main() {
 ### Simulation Control
 
 - **`SimulationBuilder`**: Configures the simulation environment.
-  - `new_default()`: Creates simulation with no processes and default parameters.
+  - `default()`: Creates simulation with no processes and default parameters.
   - `seed(u64)`: Sets the random seed for deterministic execution.
   - `time_budget(Jiffies)`: Sets the maximum duration of the simulation.
   - `add_pool<P: ProcessHandle + Default + 'static>(&str, usize)`: Creates a pool of processes.

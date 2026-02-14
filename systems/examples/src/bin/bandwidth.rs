@@ -25,7 +25,7 @@ fn run_unbounded() -> usize {
     anykv::set::<usize>("messages_sent", 0);
     anykv::set::<usize>("messages_received", 0);
 
-    let mut sim = SimulationBuilder::new_default()
+    let mut sim = SimulationBuilder::default()
         .add_pool::<Sender>("Senders", 1)
         .add_pool::<Receiver>("Receivers", 1)
         .nic_bandwidth(BandwidthDescription::Unbounded)
@@ -56,7 +56,7 @@ fn run_bounded() -> usize {
     anykv::set::<usize>("messages_sent", 0);
     anykv::set::<usize>("messages_received", 0);
 
-    let mut sim = SimulationBuilder::new_default()
+    let mut sim = SimulationBuilder::default()
         .add_pool::<Sender>("Senders", 1)
         .add_pool::<Receiver>("Receivers", 1)
         // Very low bandwidth: 1 byte per jiffy (messages will queue up)

@@ -32,8 +32,8 @@ pub struct SimulationBuilder {
     bandwidth: BandwidthDescription,
 }
 
-impl SimulationBuilder {
-    pub fn new_default() -> SimulationBuilder {
+impl Default for SimulationBuilder {
+    fn default() -> Self {
         SimulationBuilder {
             seed: 69,
             time_budget: Jiffies(1_000_000),
@@ -43,7 +43,9 @@ impl SimulationBuilder {
             latency_topology: HashMap::new(),
         }
     }
+}
 
+impl SimulationBuilder {
     pub fn add_pool<P: ProcessHandle + Default + 'static>(
         mut self,
         name: &str,

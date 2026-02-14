@@ -8,7 +8,7 @@ use kv::abd_store::{
 
 fn main() {
     // 1 jiffy == 1ms
-    let mut sim = SimulationBuilder::new_default()
+    let mut sim = SimulationBuilder::default()
         .add_pool::<Replica>(REPLICA_POOL_NAME, 10)
         .add_pool::<Client>(CLIENT_POOL_NAME, 4)
         .time_budget(Jiffies(5000))

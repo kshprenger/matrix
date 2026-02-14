@@ -29,7 +29,7 @@ fn main() {
             anykv::set::<usize>("D", d); // Sample size
             anykv::set::<f64>("threshold", threshold); // xf + 1
 
-            let mut sim = SimulationBuilder::new_default()
+            let mut sim = SimulationBuilder::default()
                 .add_pool::<SparseBullshark>("Validators", k_validators)
                 .latency_topology(&[LatencyDescription::WithinPool(
                     "Validators",

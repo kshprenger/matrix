@@ -4,7 +4,7 @@ use dscale::{global::anykv, *};
 use examples::timers::LazyPingPong;
 
 fn main() {
-    let mut sim = SimulationBuilder::new_default()
+    let mut sim = SimulationBuilder::default()
         .add_pool::<LazyPingPong>("TimerDemoPool", 2)
         .nic_bandwidth(BandwidthDescription::Unbounded)
         .latency_topology(&[LatencyDescription::WithinPool(

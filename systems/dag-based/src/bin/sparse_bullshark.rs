@@ -27,7 +27,7 @@ fn main() {
             anykv::set::<(f64, usize)>("avg_virtual_size", (0.0, 0));
             anykv::set::<usize>("D", d); // Sample size
 
-            let mut sim = SimulationBuilder::new_default()
+            let mut sim = SimulationBuilder::default()
                 .add_pool::<SparseBullshark>("Validators", k_validators)
                 .latency_topology(&[LatencyDescription::WithinPool(
                     "Validators",

@@ -5,7 +5,7 @@ use dscale::{
 };
 
 fn main() {
-    let mut sim = SimulationBuilder::new_default()
+    let mut sim = SimulationBuilder::default()
         .add_pool::<DAGRider>("Validators", 53)
         .latency_topology(&[LatencyDescription::WithinPool(
             "Validators",
