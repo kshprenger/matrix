@@ -13,7 +13,7 @@ pub(crate) struct LatencyQueue {
     queue: TimePriorityMessageQueue,
 }
 impl LatencyQueue {
-    pub(crate) fn New(randomizer: Randomizer, topology: Rc<Topology>) -> Self {
+    pub(crate) fn new(randomizer: Randomizer, topology: Rc<Topology>) -> Self {
         Self {
             randomizer,
             topology,
@@ -21,14 +21,14 @@ impl LatencyQueue {
         }
     }
 
-    pub(crate) fn Push(&mut self, mut message: RoutedMessage) {
+    pub(crate) fn push(&mut self, mut message: RoutedMessage) {
         debug!(
             "Arrival time before adding latency: {}",
             message.arrival_time
         );
-        message.arrival_time += self.randomizer.RandomUsize(
+        message.arrival_time += self.randomizer.random_usize(
             self.topology
-                .GetDistribution(message.step.source, message.step.dest),
+                .get_distribution(message.step.source, message.step.dest),
         );
         debug!(
             "Arrival time after adding random latency: {}",
@@ -37,11 +37,11 @@ impl LatencyQueue {
         self.queue.push(std::cmp::Reverse(message));
     }
 
-    pub(crate) fn Pop(&mut self) -> Option<RoutedMessage> {
+    pub(crate) fn pop(&mut self) -> Option<RoutedMessage> {
         Some(self.queue.pop()?.0)
     }
 
-    pub(crate) fn Peek(&self) -> Option<&RoutedMessage> {
+    pub(crate) fn peek(&self) -> Option<&RoutedMessage> {
         Some(&self.queue.peek()?.0)
     }
 }

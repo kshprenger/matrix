@@ -12,7 +12,7 @@ use crate::{
     topology::{LatencyDescription, LatencyTopology},
 };
 
-fn InitLogger() {
+fn init_logger() {
     let _ = env_logger::Builder::from_default_env()
         .format(|buf, record| {
             let module_path = record.module_path().unwrap_or("unknown");
@@ -33,7 +33,7 @@ pub struct SimulationBuilder {
 }
 
 impl SimulationBuilder {
-    pub fn NewDefault() -> SimulationBuilder {
+    pub fn new_default() -> SimulationBuilder {
         SimulationBuilder {
             seed: 69,
             time_budget: Jiffies(1_000_000),
@@ -44,7 +44,7 @@ impl SimulationBuilder {
         }
     }
 
-    pub fn AddPool<P: ProcessHandle + Default + 'static>(
+    pub fn add_pool<P: ProcessHandle + Default + 'static>(
         mut self,
         name: &str,
         size: usize,
@@ -58,18 +58,18 @@ impl SimulationBuilder {
         self
     }
 
-    pub fn Seed(mut self, seed: Seed) -> Self {
+    pub fn seed(mut self, seed: Seed) -> Self {
         self.seed = seed;
         self
     }
 
-    pub fn TimeBudget(mut self, time_budget: Jiffies) -> Self {
+    pub fn time_budget(mut self, time_budget: Jiffies) -> Self {
         self.time_budget = time_budget;
         self
     }
 
-    // Should be called only after all AddPool calls
-    pub fn LatencyTopology(mut self, descriptions: &[LatencyDescription]) -> Self {
+    // Should be called only after all add_pool calls
+    pub fn latency_topology(mut self, descriptions: &[LatencyDescription]) -> Self {
         descriptions.iter().for_each(|d| {
             let (from, to, distr) = match d {
                 LatencyDescription::WithinPool(name, distr) => (*name, *name, distr),
@@ -113,13 +113,13 @@ impl SimulationBuilder {
         self
     }
 
-    pub fn NICBandwidth(mut self, bandwidth: BandwidthDescription) -> Self {
+    pub fn nic_bandwidth(mut self, bandwidth: BandwidthDescription) -> Self {
         self.bandwidth = bandwidth;
         self
     }
 
-    pub fn Build(self) -> Simulation {
-        InitLogger();
+    pub fn build(self) -> Simulation {
+        init_logger();
 
         let mut pool_listing = HashMap::new();
         let mut procs = BTreeMap::new();
@@ -133,7 +133,7 @@ impl SimulationBuilder {
             pool_listing.insert(name, ids);
         }
 
-        Simulation::New(
+        Simulation::new(
             self.seed,
             self.time_budget,
             self.bandwidth,

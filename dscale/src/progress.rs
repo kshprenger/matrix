@@ -12,7 +12,7 @@ pub(crate) struct Bar {
 }
 
 impl Bar {
-    pub(crate) fn New(total: Jiffies) -> Self {
+    pub(crate) fn new(total: Jiffies) -> Self {
         let bar = if log_enabled!(log::Level::Info) {
             let bar = ProgressBar::new(total.0 as u64);
             bar.set_style(
@@ -33,7 +33,7 @@ impl Bar {
         }
     }
 
-    pub(crate) fn MakeProgress(&mut self, time: Jiffies) {
+    pub(crate) fn make_progress(&mut self, time: Jiffies) {
         let d = time.0 / self.delta;
         if d > self.prev_log {
             self.prev_log = d;
@@ -41,7 +41,7 @@ impl Bar {
         }
     }
 
-    pub(crate) fn Finish(&mut self) {
+    pub(crate) fn finish(&mut self) {
         self.bar.finish();
     }
 }

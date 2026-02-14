@@ -7,7 +7,7 @@ use std::{
     rc::Rc,
 };
 
-use dscale::{Broadcast, Message, MessagePtr, ProcessId, Rank, SendTo};
+use dscale::{Message, MessagePtr, ProcessId, broadcast, rank, send_to};
 
 use crate::consistent_broadcast::message::BCBMessageId;
 
@@ -23,15 +23,15 @@ pub struct ByzantineConsistentBroadcast {
 }
 
 impl ByzantineConsistentBroadcast {
-    fn AdversaryThreshold(&self) -> usize {
+    fn adversary_threshold(&self) -> usize {
         (self.proc_num - 1) / 3
     }
 
-    fn QuorumSize(&self) -> usize {
-        2 * self.AdversaryThreshold() + 1
+    fn quorum_size(&self) -> usize {
+        2 * self.adversary_threshold() + 1
     }
 
-    fn NextUniqueMessageId(&mut self) -> BCBMessageId {
+    fn next_unique_message_id(&mut self) -> BCBMessageId {
         self.message_id += 1;
         BCBMessageId {
             process_id: self.process_id,
@@ -41,19 +41,19 @@ impl ByzantineConsistentBroadcast {
 }
 
 impl ByzantineConsistentBroadcast {
-    pub(crate) fn ReliablyBroadcast(&mut self, message: impl Message + 'static) {
-        let next_id = self.NextUniqueMessageId();
+    pub(crate) fn reliably_broadcast(&mut self, message: impl Message + 'static) {
+        let next_id = self.next_unique_message_id();
         let shared = Rc::new(message);
         self.messages.insert(next_id, (shared.clone(), 0));
-        Broadcast(BCBMessage::Initiate((next_id, shared)));
+        broadcast(BCBMessage::Initiate((next_id, shared)));
     }
 
-    pub(crate) fn Start(&mut self, proc_num: usize) {
-        self.process_id = Rank();
+    pub(crate) fn start(&mut self, proc_num: usize) {
+        self.process_id = rank();
         self.proc_num = proc_num;
     }
 
-    pub(crate) fn Process(
+    pub(crate) fn process(
         &mut self,
         from: ProcessId,
         message: Rc<BCBMessage>,
@@ -77,7 +77,7 @@ impl ByzantineConsistentBroadcast {
                     }
                     self.messages.insert(*id, (m.clone(), 0));
                 }
-                SendTo(from, BCBMessage::Signature(*id));
+                send_to(from, BCBMessage::Signature(*id));
                 return None;
             }
             BCBMessage::Signature(id) => {
@@ -88,8 +88,8 @@ impl ByzantineConsistentBroadcast {
                     }
                     Some(message_state) => {
                         message_state.1 += 1;
-                        if message_state.1 == self.QuorumSize() {
-                            Broadcast(BCBMessage::Certificate(self.proc_num, *id));
+                        if message_state.1 == self.quorum_size() {
+                            broadcast(BCBMessage::Certificate(self.proc_num, *id));
                         }
                         return None;
                     }

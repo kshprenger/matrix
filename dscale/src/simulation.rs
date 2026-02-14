@@ -20,7 +20,7 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    pub(crate) fn New(
+    pub(crate) fn new(
         seed: random::Seed,
         time_budget: Jiffies,
         bandwidth: BandwidthDescription,
@@ -28,24 +28,24 @@ impl Simulation {
         pool_listing: PoolListing,
         procs: HandlerMap,
     ) -> Self {
-        let topology = Topology::NewShared(pool_listing.clone(), latency_topology);
-        let nursery = Nursery::New(procs);
+        let topology = Topology::new_shared(pool_listing.clone(), latency_topology);
+        let nursery = Nursery::new(procs);
 
-        let network_actor = Rc::new(RefCell::new(Network::New(
+        let network_actor = Rc::new(RefCell::new(Network::new(
             seed,
             bandwidth,
             topology.clone(),
             nursery.clone(),
         )));
 
-        let timers_actor = Rc::new(RefCell::new(TimerManager::New(nursery.clone())));
+        let timers_actor = Rc::new(RefCell::new(TimerManager::new(nursery.clone())));
 
-        global::configuration::SetupGlobalConfiguration(nursery.Size());
-        global::SetupAccess(
+        global::configuration::setup_global_configuration(nursery.size());
+        global::setup_access(
             network_actor.clone(),
             timers_actor.clone(),
             topology,
-            Randomizer::New(seed),
+            Randomizer::new(seed),
         );
 
         let actors: Vec<SharedActor> = vec![network_actor, timers_actor];
@@ -53,52 +53,53 @@ impl Simulation {
         Self {
             actors,
             time_budget,
-            progress_bar: Bar::New(time_budget),
+            progress_bar: Bar::new(time_budget),
         }
     }
 
-    pub fn Run(&mut self) {
-        self.Start();
+    pub fn run(&mut self) {
+        self.start();
 
-        while global::Now() < self.time_budget {
-            self.Step();
+        while global::now() < self.time_budget {
+            self.step();
         }
 
         // For small simulations progress bar is not fullfilling
-        self.progress_bar.Finish();
+        self.progress_bar.finish();
 
-        info!("Looks good! ヽ(‘ー`)ノ");
+        info!("Looks good! ヽ('ー`)ノ");
     }
 }
 
 impl Simulation {
-    fn Start(&mut self) {
+    fn start(&mut self) {
         self.actors.iter_mut().for_each(|actor| {
-            actor.borrow_mut().Start();
-            global::Schedule(); // Only after Start() to avoid double borrow_mut() of SharedActor
+            actor.borrow_mut().start();
+            global::schedule(); // Only after start() to avoid double borrow_mut() of SharedActor
         });
     }
 
-    fn Step(&mut self) {
-        match self.PeekClosest() {
+    fn step(&mut self) {
+        match self.peek_closest() {
             None => {
                 error!("DEADLOCK! (ﾉಥ益ಥ）ﾉ ┻━┻ Try with RUST_LOG=debug");
                 exit(1)
             }
             Some((future, actor)) => {
-                global::FastForwardClock(future);
-                actor.borrow_mut().Step();
-                global::Schedule(); // Only after Step() to avoid double borrow_mut() of SharedActor
-                self.progress_bar.MakeProgress(future.min(self.time_budget));
+                global::fast_forward_clock(future);
+                actor.borrow_mut().step();
+                global::schedule(); // Only after step() to avoid double borrow_mut() of SharedActor
+                self.progress_bar
+                    .make_progress(future.min(self.time_budget));
             }
         }
     }
 
-    fn PeekClosest(&mut self) -> Option<(Jiffies, SharedActor)> {
+    fn peek_closest(&mut self) -> Option<(Jiffies, SharedActor)> {
         let mut min_time = Jiffies(usize::MAX);
         let mut sha: Option<SharedActor> = None;
         for actor in self.actors.iter() {
-            actor.borrow().PeekClosest().map(|time| {
+            actor.borrow().peek_closest().map(|time| {
                 if time < min_time {
                     min_time = time;
                     sha = Some(actor.clone())
@@ -112,6 +113,6 @@ impl Simulation {
 
 impl Drop for Simulation {
     fn drop(&mut self) {
-        global::Drop(); // Clear thread_locals
+        global::drop_all(); // Clear thread_locals
     }
 }

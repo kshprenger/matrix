@@ -5,7 +5,7 @@ pub mod types;
 
 use std::collections::HashMap;
 
-use dscale::{global::configuration::ProcessNumber, *};
+use dscale::{global::configuration::process_number, *};
 
 use crate::abd_store::{
     client::ClientReq,
@@ -20,42 +20,42 @@ pub struct Replica {
 }
 
 impl Replica {
-    fn QuorumSize(&self) -> usize {
+    fn quorum_size(&self) -> usize {
         self.proc_num / 2 + 1
     }
 
-    fn FindRegister(&mut self, key: Key) -> &mut MWMRAtomicRegister {
+    fn find_register(&mut self, key: Key) -> &mut MWMRAtomicRegister {
         self.registers
             .entry(key)
-            .or_insert(MWMRAtomicRegister::New(key))
+            .or_insert(MWMRAtomicRegister::new(key))
     }
 }
 
 impl ProcessHandle for Replica {
-    fn Start(&mut self) {
-        self.proc_num = ProcessNumber()
+    fn start(&mut self) {
+        self.proc_num = process_number()
     }
 
-    fn OnMessage(&mut self, from: dscale::ProcessId, message: dscale::MessagePtr) {
-        if let Some(client_op) = message.TryAs::<ClientReq>() {
+    fn on_message(&mut self, from: dscale::ProcessId, message: dscale::MessagePtr) {
+        if let Some(client_op) = message.try_as::<ClientReq>() {
             match *client_op {
                 ClientReq::GetRequest(key) => {
-                    Debug!("Client {from} requested Get({key})");
-                    self.FindRegister(key).Read(from);
+                    debug_process!("Client {from} requested Get({key})");
+                    self.find_register(key).read(from);
                 }
                 ClientReq::PutRequest(key, value) => {
-                    Debug!("Client {from} requested Put({key},{value})");
-                    self.FindRegister(key).Write(from, value);
+                    debug_process!("Client {from} requested Put({key},{value})");
+                    self.find_register(key).write(from, value);
                 }
             }
             return;
         }
 
-        let register_op = message.As::<RoutedRegisterOp>();
-        let quorum_size = self.QuorumSize();
-        let register = self.FindRegister(register_op.key);
-        register.Serve(&register_op.op, from, register_op.key, quorum_size);
+        let register_op = message.as_type::<RoutedRegisterOp>();
+        let quorum_size = self.quorum_size();
+        let register = self.find_register(register_op.key);
+        register.serve(&register_op.op, from, register_op.key, quorum_size);
     }
 
-    fn OnTimer(&mut self, _id: TimerId) {}
+    fn on_timer(&mut self, _id: TimerId) {}
 }

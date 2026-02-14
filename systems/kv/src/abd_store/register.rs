@@ -56,7 +56,7 @@ pub(crate) struct MWMRAtomicRegister {
 }
 
 impl MWMRAtomicRegister {
-    pub(crate) fn New(key: Key) -> Self {
+    pub(crate) fn new(key: Key) -> Self {
         Self {
             key,
             local_value: 0,
@@ -68,9 +68,9 @@ impl MWMRAtomicRegister {
         }
     }
 
-    pub(crate) fn Write(&mut self, client: ClientId, value: Value) {
+    pub(crate) fn write(&mut self, client: ClientId, value: Value) {
         self.r += 1;
-        Debug!("[r == {}] Gathering read quorum for Write...", self.r);
+        debug_process!("[r == {}] Gathering read quorum for Write...", self.r);
         self.pending_read_quorums.insert(
             self.r,
             PendingReadQuorum {
@@ -78,7 +78,7 @@ impl MWMRAtomicRegister {
                 read_quorum: Vec::new(),
             },
         );
-        BroadcastWithinPool(
+        broadcast_within_pool(
             REPLICA_POOL_NAME,
             RoutedRegisterOp {
                 key: self.key,
@@ -88,9 +88,9 @@ impl MWMRAtomicRegister {
         return;
     }
 
-    pub(crate) fn Read(&mut self, client: ClientId) {
+    pub(crate) fn read(&mut self, client: ClientId) {
         self.r += 1;
-        Debug!("[r == {}]. Gathering read quorum for Read...", self.r);
+        debug_process!("[r == {}]. Gathering read quorum for Read...", self.r);
         self.pending_read_quorums.insert(
             self.r,
             PendingReadQuorum {
@@ -98,7 +98,7 @@ impl MWMRAtomicRegister {
                 read_quorum: Vec::new(),
             },
         );
-        BroadcastWithinPool(
+        broadcast_within_pool(
             REPLICA_POOL_NAME,
             RoutedRegisterOp {
                 key: self.key,
@@ -107,7 +107,7 @@ impl MWMRAtomicRegister {
         );
     }
 
-    pub(crate) fn Serve(
+    pub(crate) fn serve(
         &mut self,
         op: &RegisterOps,
         from: ProcessId,
@@ -116,7 +116,7 @@ impl MWMRAtomicRegister {
     ) {
         match *op {
             RegisterOps::RegisterReadRequest(r_) => {
-                SendTo(
+                send_to(
                     from,
                     RoutedRegisterOp {
                         key,
@@ -131,7 +131,7 @@ impl MWMRAtomicRegister {
                     self.local_value = v_;
                     self.local_ts = t_;
                 }
-                SendTo(
+                send_to(
                     from,
                     RoutedRegisterOp {
                         key,
@@ -148,8 +148,8 @@ impl MWMRAtomicRegister {
                 if qourum_info.read_quorum.len() == quorum_size {
                     match qourum_info.resume {
                         CoroResumeAfterReadQuorum::Write(client, saved_value) => {
-                            Debug!("Gathered read quorum for Write");
-                            Debug!("Resuming Write...");
+                            debug_process!("Gathered read quorum for Write");
+                            debug_process!("Resuming Write...");
                             let t_ = qourum_info
                                 .read_quorum
                                 .iter()
@@ -166,8 +166,8 @@ impl MWMRAtomicRegister {
                                 },
                             );
 
-                            Debug!("Gathering write quorum for Write...");
-                            BroadcastWithinPool(
+                            debug_process!("Gathering write quorum for Write...");
+                            broadcast_within_pool(
                                 REPLICA_POOL_NAME,
                                 RoutedRegisterOp {
                                     key,
@@ -176,8 +176,8 @@ impl MWMRAtomicRegister {
                             );
                         }
                         CoroResumeAfterReadQuorum::Read(client) => {
-                            Debug!("Gathered read quorum for Read");
-                            Debug!("Resuming Read...");
+                            debug_process!("Gathered read quorum for Read");
+                            debug_process!("Resuming Read...");
                             // let v_m be the largest value with the highest timestamp t_m
                             let (v_m, t_m, _) = qourum_info
                                 .read_quorum
@@ -194,8 +194,8 @@ impl MWMRAtomicRegister {
                                 },
                             );
 
-                            Debug!("Gathering write quorum for Read...");
-                            BroadcastWithinPool(
+                            debug_process!("Gathering write quorum for Read...");
+                            broadcast_within_pool(
                                 REPLICA_POOL_NAME,
                                 RoutedRegisterOp {
                                     key,
@@ -214,14 +214,14 @@ impl MWMRAtomicRegister {
                 if qourum_info.write_quorum.len() == quorum_size {
                     match qourum_info.resume {
                         CoroResumeAfterWriteQuorum::Write(client) => {
-                            Debug!("Gathered write quorum for Write");
-                            Debug!("Resuming Write...");
-                            SendTo(client, ClientResponse::PutAck);
+                            debug_process!("Gathered write quorum for Write");
+                            debug_process!("Resuming Write...");
+                            send_to(client, ClientResponse::PutAck);
                         }
                         CoroResumeAfterWriteQuorum::Read(client, saved_value) => {
-                            Debug!("Gathered write quorum for Read");
-                            Debug!("Resuming Read...");
-                            SendTo(client, ClientResponse::GetResponse(saved_value));
+                            debug_process!("Gathered write quorum for Read");
+                            debug_process!("Resuming Read...");
+                            send_to(client, ClientResponse::GetResponse(saved_value));
                         }
                     }
                 }

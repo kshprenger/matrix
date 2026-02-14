@@ -1,7 +1,7 @@
 // Userspace debugger
 #[macro_export]
-macro_rules! Debug {
+macro_rules! debug_process {
     ($($arg:tt)+) => {
-        log::debug!("[Now: {} | P{}] {}", Now(), Rank(), format_args!($($arg)+));
+        log::debug!("[Now: {} | P{}] {}", now(), rank(), format_args!($($arg)+));
     }
 }

@@ -17,12 +17,12 @@ pub struct Call {
 }
 
 // Wing-Gong like checker
-pub fn CheckLinearizable(history: &ExecutionHistory) -> bool {
+pub fn check_linearizable(history: &ExecutionHistory) -> bool {
     let mut keys_history: HashMap<Key, Vec<Call>> = HashMap::new();
     let mut max_time = 0;
 
     for entry in history {
-        if let Some(call) = ParseEntry(entry) {
+        if let Some(call) = parse_entry(entry) {
             max_time = max_time.max(call.end);
             keys_history.entry(call.key).or_default().push(call);
         }
@@ -51,7 +51,7 @@ pub fn CheckLinearizable(history: &ExecutionHistory) -> bool {
         }
 
         ops.sort_by_key(|op| op.end);
-        if !CheckSingleKey(&ops) {
+        if !check_single_key(&ops) {
             println!("Linearizability violation for key {}!", key);
             return false;
         }
@@ -61,7 +61,7 @@ pub fn CheckLinearizable(history: &ExecutionHistory) -> bool {
     true
 }
 
-fn ParseEntry(entry: &crate::abd_store::client::ExecutionHistoryEntry) -> Option<Call> {
+fn parse_entry(entry: &crate::abd_store::client::ExecutionHistoryEntry) -> Option<Call> {
     let op_str = entry.operation.replace(" ", "");
 
     if op_str.starts_with("Get") {
@@ -93,12 +93,12 @@ fn ParseEntry(entry: &crate::abd_store::client::ExecutionHistoryEntry) -> Option
     }
 }
 
-fn CheckSingleKey(ops: &[Call]) -> bool {
+fn check_single_key(ops: &[Call]) -> bool {
     let mut used = vec![false; ops.len()];
-    Search(ops, &mut used, 0, 0)
+    search(ops, &mut used, 0, 0)
 }
 
-fn Search(ops: &[Call], used: &mut [bool], count: usize, current_value: Value) -> bool {
+fn search(ops: &[Call], used: &mut [bool], count: usize, current_value: Value) -> bool {
     if count == ops.len() {
         return true;
     }
@@ -132,7 +132,7 @@ fn Search(ops: &[Call], used: &mut [bool], count: usize, current_value: Value) -
                 Operation::Write(v) => v,
             };
 
-            if Search(ops, used, count + 1, next_value) {
+            if search(ops, used, count + 1, next_value) {
                 return true;
             }
             used[i] = false;

@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 mod actor;
 mod alloc;
 mod communication;
@@ -23,16 +21,16 @@ pub use process::ProcessId;
 pub use simulation::Simulation;
 pub use simulation_builder::SimulationBuilder;
 
-pub use global::Broadcast;
-pub use global::BroadcastWithinPool;
-pub use global::ChooseFromPool;
-pub use global::GlobalUniqueId;
-pub use global::ListPool;
-pub use global::Now;
-pub use global::Rank;
-pub use global::ScheduleTimerAfter;
-pub use global::SendRandomFromPool;
-pub use global::SendTo;
+pub use global::broadcast;
+pub use global::broadcast_within_pool;
+pub use global::choose_from_pool;
+pub use global::global_unique_id;
+pub use global::list_pool;
+pub use global::now;
+pub use global::rank;
+pub use global::schedule_timer_after;
+pub use global::send_random_from_pool;
+pub use global::send_to;
 
 pub use network::BandwidthDescription;
 

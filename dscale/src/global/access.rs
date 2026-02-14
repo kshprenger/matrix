@@ -7,7 +7,7 @@ use crate::{
     random::Randomizer,
     time::{
         Jiffies,
-        timer_manager::{NextTimerId, TimerId, TimerManagerActor},
+        timer_manager::{TimerId, TimerManagerActor, next_timer_id},
     },
     topology::Topology,
 };
@@ -23,7 +23,7 @@ pub struct SimulationAccess {
 }
 
 impl SimulationAccess {
-    pub(crate) fn New(
+    pub(crate) fn new(
         network: NetworkActor,
         timers: TimerManagerActor,
         topology: Rc<Topology>,
@@ -41,22 +41,23 @@ impl SimulationAccess {
     }
 }
 
-fn DrainTo<T: EventSubmitter>(submitter: &Rc<RefCell<T>>, events: &mut Vec<T::Event>) {
+fn drain_to<T: EventSubmitter>(submitter: &Rc<RefCell<T>>, events: &mut Vec<T::Event>) {
     if !events.is_empty() {
-        submitter.borrow_mut().Submit(events);
+        submitter.borrow_mut().submit(events);
     }
 }
 
 impl SimulationAccess {
-    fn ListPool(&mut self, name: &str) -> &[ProcessId] {
-        self.topology.ListPool(name)
+    fn list_pool(&mut self, name: &str) -> &[ProcessId] {
+        self.topology.list_pool(name)
     }
 
-    fn ChooseFromPool(&mut self, name: &str) -> ProcessId {
-        self.random.ChooseFromSlice(&self.topology.ListPool(name))
+    fn choose_from_pool(&mut self, name: &str) -> ProcessId {
+        self.random
+            .choose_from_slice(&self.topology.list_pool(name))
     }
 
-    fn BroadcastWithinPool(&mut self, pool_name: &'static str, message: impl Message + 'static) {
+    fn broadcast_within_pool(&mut self, pool_name: &'static str, message: impl Message + 'static) {
         self.scheduled_messages.push((
             self.process_on_execution,
             Destination::BroadcastWithinPool(pool_name),
@@ -64,7 +65,7 @@ impl SimulationAccess {
         ));
     }
 
-    fn Broadcast(&mut self, message: impl Message + 'static) {
+    fn broadcast(&mut self, message: impl Message + 'static) {
         self.scheduled_messages.push((
             self.process_on_execution,
             Destination::Broadcast,
@@ -72,7 +73,7 @@ impl SimulationAccess {
         ));
     }
 
-    fn SendTo(&mut self, to: ProcessId, message: impl Message + 'static) {
+    fn send_to(&mut self, to: ProcessId, message: impl Message + 'static) {
         self.scheduled_messages.push((
             self.process_on_execution,
             Destination::To(to),
@@ -80,96 +81,96 @@ impl SimulationAccess {
         ));
     }
 
-    fn SendRandomFromPool(&mut self, pool: &str, message: impl Message + 'static) {
-        let target = self.ChooseFromPool(pool);
-        self.SendTo(target, message);
+    fn send_random_from_pool(&mut self, pool: &str, message: impl Message + 'static) {
+        let target = self.choose_from_pool(pool);
+        self.send_to(target, message);
     }
 
-    fn ScheduleTimerAfter(&mut self, after: Jiffies) -> TimerId {
-        let timer_id = NextTimerId();
+    fn schedule_timer_after(&mut self, after: Jiffies) -> TimerId {
+        let timer_id = next_timer_id();
         self.scheduled_timers
             .push((self.process_on_execution, timer_id, after));
         timer_id
     }
 
-    fn Drain(&mut self) {
-        DrainTo(&self.network, &mut self.scheduled_messages);
-        DrainTo(&self.timers, &mut self.scheduled_timers);
+    fn drain(&mut self) {
+        drain_to(&self.network, &mut self.scheduled_messages);
+        drain_to(&self.timers, &mut self.scheduled_timers);
     }
 
-    fn SetProcess(&mut self, id: ProcessId) {
+    fn set_process(&mut self, id: ProcessId) {
         self.process_on_execution = id
     }
 
-    fn Rank(&self) -> ProcessId {
+    fn rank(&self) -> ProcessId {
         self.process_on_execution
     }
 }
 
 // Any actor makes step -> Buffering outcoming events -> Drain them to all actors
-// Before any process step actor should ensure corrent ProcessId on execution via access::SetProcess()
+// Before any process step actor should ensure corrent ProcessId on execution via access::set_process()
 thread_local! {
     pub(crate) static ACCESS_HANDLE: RefCell<Option<SimulationAccess>> = RefCell::new(None);
 }
 
-pub(crate) fn Drop() {
+pub(crate) fn drop_access() {
     ACCESS_HANDLE.take();
 }
 
-pub(crate) fn SetupAccess(
+pub(crate) fn setup_access(
     network: NetworkActor,
     timers: TimerManagerActor,
     topology: Rc<Topology>,
     random: Randomizer,
 ) {
     ACCESS_HANDLE.with_borrow_mut(|access| {
-        *access = Some(SimulationAccess::New(network, timers, topology, random))
+        *access = Some(SimulationAccess::new(network, timers, topology, random))
     });
 }
 
-pub(crate) fn WithAccess<F, T>(f: F) -> T
+pub(crate) fn with_access<F, T>(f: F) -> T
 where
     F: FnOnce(&mut SimulationAccess) -> T,
 {
     ACCESS_HANDLE.with_borrow_mut(|access| f(access.as_mut().expect("Out of simulation context")))
 }
 
-pub(crate) fn SetProcess(id: ProcessId) {
-    WithAccess(|access| access.SetProcess(id));
+pub(crate) fn set_process(id: ProcessId) {
+    with_access(|access| access.set_process(id));
 }
 
-pub(crate) fn Schedule() {
-    WithAccess(|access| access.Drain());
+pub(crate) fn schedule() {
+    with_access(|access| access.drain());
 }
 
-pub fn ScheduleTimerAfter(after: Jiffies) -> TimerId {
-    WithAccess(|access| access.ScheduleTimerAfter(after))
+pub fn schedule_timer_after(after: Jiffies) -> TimerId {
+    with_access(|access| access.schedule_timer_after(after))
 }
 
-pub fn Broadcast(message: impl Message + 'static) {
-    WithAccess(|access| access.Broadcast(message));
+pub fn broadcast(message: impl Message + 'static) {
+    with_access(|access| access.broadcast(message));
 }
 
-pub fn BroadcastWithinPool(pool: &'static str, message: impl Message + 'static) {
-    WithAccess(|access| access.BroadcastWithinPool(pool, message));
+pub fn broadcast_within_pool(pool: &'static str, message: impl Message + 'static) {
+    with_access(|access| access.broadcast_within_pool(pool, message));
 }
 
-pub fn SendTo(to: ProcessId, message: impl Message + 'static) {
-    WithAccess(|access| access.SendTo(to, message));
+pub fn send_to(to: ProcessId, message: impl Message + 'static) {
+    with_access(|access| access.send_to(to, message));
 }
 
-pub fn SendRandomFromPool(pool: &'static str, message: impl Message + 'static) {
-    WithAccess(|access| access.SendRandomFromPool(pool, message));
+pub fn send_random_from_pool(pool: &'static str, message: impl Message + 'static) {
+    with_access(|access| access.send_random_from_pool(pool, message));
 }
 
-pub fn Rank() -> ProcessId {
-    WithAccess(|access| access.Rank())
+pub fn rank() -> ProcessId {
+    with_access(|access| access.rank())
 }
 
-pub fn ListPool(name: &str) -> Vec<ProcessId> {
-    WithAccess(|access| access.ListPool(name).to_vec())
+pub fn list_pool(name: &str) -> Vec<ProcessId> {
+    with_access(|access| access.list_pool(name).to_vec())
 }
 
-pub fn ChooseFromPool(name: &str) -> ProcessId {
-    WithAccess(|access| access.ChooseFromPool(name))
+pub fn choose_from_pool(name: &str) -> ProcessId {
+    with_access(|access| access.choose_from_pool(name))
 }

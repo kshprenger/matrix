@@ -5,8 +5,9 @@ use std::{
 };
 
 use dscale::{
-    Message, Now, ProcessId, Rank,
-    global::{anykv, configuration::ProcessNumber},
+    Message, ProcessId,
+    global::{anykv, configuration::process_number},
+    now, rank,
     time::{self},
 };
 
@@ -17,7 +18,7 @@ const GC_REMAIN: usize = usize::MAX;
 pub type VertexPtr = Rc<Vertex>;
 type Round = Vec<Option<VertexPtr>>;
 
-pub fn SameVertex(v: &VertexPtr, u: &VertexPtr) -> bool {
+pub fn same_vertex(v: &VertexPtr, u: &VertexPtr) -> bool {
     Rc::ptr_eq(v, u)
 }
 
@@ -63,8 +64,8 @@ impl Ord for Vertex {
     }
 }
 
-fn CertificateSize() -> usize {
-    (ProcessNumber() / 8) + ID_SIZE
+fn certificate_size() -> usize {
+    (process_number() / 8) + ID_SIZE
 }
 
 #[derive(Clone)]
@@ -74,10 +75,10 @@ pub enum VertexMessage {
 }
 
 impl Message for VertexMessage {
-    fn VirtualSize(&self) -> usize {
+    fn virtual_size(&self) -> usize {
         // Round, ProcessId
         4 + 4
-            + CertificateSize()
+            + certificate_size()
                 * match self {
                     VertexMessage::Genesis(v) => v.strong_edges.len(),
                     VertexMessage::Vertex(v) => v.strong_edges.len(),
@@ -95,13 +96,13 @@ pub struct RoundBasedDAG {
 }
 
 impl RoundBasedDAG {
-    pub fn SetRoundSize(&mut self, proc_num: usize) {
+    pub fn set_round_size(&mut self, proc_num: usize) {
         self.proc_num = proc_num;
     }
 
     // v should be already in the DAG
     // "in some deterministic order"
-    pub fn OrderFrom(&mut self, v: &VertexPtr) {
+    pub fn order_from(&mut self, v: &VertexPtr) {
         let mut queue = VecDeque::new();
         queue.push_back(v.clone());
 
@@ -115,16 +116,16 @@ impl RoundBasedDAG {
                 .collect();
 
             for edge in strong_edges.into_iter() {
-                let real_round = self.Round(edge.round);
+                let real_round = self.round(edge.round);
                 if self.ordered[real_round][edge.source] {
                     continue;
                 } else {
                     self.ordered[real_round][edge.source] = true;
-                    if Rank() == edge.source {
-                        anykv::Modify::<(f64, usize)>(
+                    if rank() == edge.source {
+                        anykv::modify::<(f64, usize)>(
                             "avg_latency",
                             |(prev_avg_latency, prev_total_ordered)| {
-                                let vertex_latency = Now() - edge.creation_time;
+                                let vertex_latency = now() - edge.creation_time;
                                 *prev_avg_latency = (vertex_latency.0 as f64
                                     + (*prev_avg_latency * *prev_total_ordered as f64))
                                     as f64
@@ -138,19 +139,19 @@ impl RoundBasedDAG {
                 }
             }
         }
-        self.GC();
+        self.gc();
     }
 
     // v & u should be already in the DAG
     // u.round <= v.round
-    pub fn PathExists(&mut self, v: &VertexPtr, u: &VertexPtr) -> bool {
-        if SameVertex(&v, &u) {
+    pub fn path_exists(&mut self, v: &VertexPtr, u: &VertexPtr) -> bool {
+        if same_vertex(&v, &u) {
             return true;
         }
 
-        let read_round = self.Round(v.round);
+        let read_round = self.round(v.round);
 
-        self.ResetVisited();
+        self.reset_visited();
         self.visited[read_round][v.source] = true;
 
         let mut queue = VecDeque::new();
@@ -170,10 +171,10 @@ impl RoundBasedDAG {
                 if edge.round < u.round {
                     continue;
                 }
-                if SameVertex(&edge, &u) {
+                if same_vertex(&edge, &u) {
                     return true;
                 } else {
-                    let read_round = self.Round(edge.round);
+                    let read_round = self.round(edge.round);
                     if self.visited[read_round][edge.source] {
                         continue;
                     } else {
@@ -187,32 +188,32 @@ impl RoundBasedDAG {
         return false;
     }
 
-    pub fn AddVertex(&mut self, v: VertexPtr) {
-        if self.CurrentAllocatedRounds() > v.round {
-            self.Insert(v);
+    pub fn add_vertex(&mut self, v: VertexPtr) {
+        if self.current_allocated_rounds() > v.round {
+            self.insert(v);
         } else {
-            let need_allocate_rounds = self.CurrentAllocatedRounds() - v.round + 1;
-            self.Grow(need_allocate_rounds);
-            self.Insert(v)
+            let need_allocate_rounds = self.current_allocated_rounds() - v.round + 1;
+            self.grow(need_allocate_rounds);
+            self.insert(v)
         }
     }
 
-    pub fn CurrentAllocatedRounds(&self) -> usize {
+    pub fn current_allocated_rounds(&self) -> usize {
         self.matrix.len() + self.gc_offset
     }
 
-    pub fn CurrentMaxAllocatedRound(&self) -> usize {
-        self.CurrentAllocatedRounds().saturating_sub(1)
+    pub fn current_max_allocated_round(&self) -> usize {
+        self.current_allocated_rounds().saturating_sub(1)
     }
 }
 
 impl RoundBasedDAG {
     // Round with GC offset assuming base > offset
-    fn Round(&self, base: usize) -> usize {
+    fn round(&self, base: usize) -> usize {
         base - self.gc_offset
     }
 
-    fn Grow(&mut self, rounds: usize) {
+    fn grow(&mut self, rounds: usize) {
         (0..rounds).for_each(|_| {
             let mut round = Round::new();
             round.resize(self.proc_num + 1, None);
@@ -227,7 +228,7 @@ impl RoundBasedDAG {
         });
     }
 
-    fn GC(&mut self) {
+    fn gc(&mut self) {
         let to_gc = self.ordered.len().saturating_sub(GC_REMAIN);
         (0..to_gc).for_each(|_| {
             self.matrix.pop_front();
@@ -237,13 +238,13 @@ impl RoundBasedDAG {
         self.gc_offset += to_gc;
     }
 
-    fn Insert(&mut self, v: VertexPtr) {
-        let round = self.Round(v.round);
+    fn insert(&mut self, v: VertexPtr) {
+        let round = self.round(v.round);
         let source = v.source;
         self.matrix[round][source] = Some(v);
     }
 
-    fn ResetVisited(&mut self) {
+    fn reset_visited(&mut self) {
         self.visited.iter_mut().for_each(|round| {
             let l = round.len();
             round.clear();
@@ -256,6 +257,6 @@ impl Index<usize> for RoundBasedDAG {
     type Output = Round;
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self.matrix[self.Round(index)]
+        &self.matrix[self.round(index)]
     }
 }

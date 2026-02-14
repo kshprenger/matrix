@@ -47,72 +47,72 @@ impl Default for Client {
 }
 
 impl ProcessHandle for Client {
-    fn Start(&mut self) {
-        self.rng = Some(StdRng::seed_from_u64(configuration::Seed()));
-        ScheduleTimerAfter(Jiffies(100));
+    fn start(&mut self) {
+        self.rng = Some(StdRng::seed_from_u64(configuration::seed()));
+        schedule_timer_after(Jiffies(100));
     }
 
-    fn OnMessage(&mut self, from: dscale::ProcessId, message: dscale::MessagePtr) {
-        let response = message.As::<ClientResponse>();
-        self.current_op.client = Rank();
-        self.current_op.end = Now();
+    fn on_message(&mut self, from: dscale::ProcessId, message: dscale::MessagePtr) {
+        let response = message.as_type::<ClientResponse>();
+        self.current_op.client = rank();
+        self.current_op.end = now();
         match *response {
             ClientResponse::GetResponse(value) => {
-                Debug!("Got get response from {from}. Value: {value}");
+                debug_process!("Got get response from {from}. Value: {value}");
                 self.current_op.result = Some(value);
             }
             ClientResponse::PutAck => {
-                Debug!("Got PutAck from {from}");
+                debug_process!("Got PutAck from {from}");
                 self.current_op.result = None;
             }
         }
 
-        anykv::Modify::<ExecutionHistory>("linearizable_history", |h| {
+        anykv::modify::<ExecutionHistory>("linearizable_history", |h| {
             h.push(self.current_op.clone());
         });
 
-        ScheduleTimerAfter(Jiffies(100));
+        schedule_timer_after(Jiffies(100));
     }
 
-    fn OnTimer(&mut self, _id: dscale::TimerId) {
-        self.DoRandomOperation();
+    fn on_timer(&mut self, _id: dscale::TimerId) {
+        self.do_random_operation();
     }
 }
 
 impl Client {
-    fn ChooseKey(&mut self) -> Key {
+    fn choose_key(&mut self) -> Key {
         self.keypool
             .choose(self.rng.as_mut().unwrap())
             .copied()
             .unwrap()
     }
 
-    fn ChooseValue(&self) -> Value {
-        GlobalUniqueId() // Make values monotonous
+    fn choose_value(&self) -> Value {
+        global_unique_id() // Make values monotonous
     }
 
-    fn ChooseOperation(&mut self) -> ClientReq {
+    fn choose_operation(&mut self) -> ClientReq {
         let random_bool = self.rng.as_mut().unwrap().random::<bool>();
-        let random_key = self.ChooseKey();
+        let random_key = self.choose_key();
 
-        self.current_op.start = Now();
+        self.current_op.start = now();
 
         if random_bool {
-            Debug!("Choosed operation: Get({random_key})");
+            debug_process!("Choosed operation: Get({random_key})");
             self.current_op.operation = String::from(format!("Get({random_key})"));
             ClientReq::GetRequest(random_key)
         } else {
-            let value = self.ChooseValue();
-            Debug!("Choosed operation: Put({random_key},{value})");
+            let value = self.choose_value();
+            debug_process!("Choosed operation: Put({random_key},{value})");
             self.current_op.operation = String::from(format!("Put({random_key},{value})"));
             ClientReq::PutRequest(random_key, value)
         }
     }
 
-    fn DoRandomOperation(&mut self) {
-        let target = ChooseFromPool("Replicas");
-        let operation = self.ChooseOperation();
-        SendTo(target, operation);
-        Debug!("Sent operation to {target}");
+    fn do_random_operation(&mut self) {
+        let target = choose_from_pool("Replicas");
+        let operation = self.choose_operation();
+        send_to(target, operation);
+        debug_process!("Sent operation to {target}");
     }
 }

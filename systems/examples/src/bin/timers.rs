@@ -4,28 +4,28 @@ use dscale::{global::anykv, *};
 use examples::timers::LazyPingPong;
 
 fn main() {
-    let mut sim = SimulationBuilder::NewDefault()
-        .AddPool::<LazyPingPong>("TimerDemoPool", 2)
-        .NICBandwidth(BandwidthDescription::Unbounded)
-        .LatencyTopology(&[LatencyDescription::WithinPool(
+    let mut sim = SimulationBuilder::new_default()
+        .add_pool::<LazyPingPong>("TimerDemoPool", 2)
+        .nic_bandwidth(BandwidthDescription::Unbounded)
+        .latency_topology(&[LatencyDescription::WithinPool(
             "TimerDemoPool",
             Distributions::Uniform(Jiffies(10), Jiffies(50)),
         )])
-        .TimeBudget(Jiffies(10_000))
-        .Seed(42)
-        .Build();
+        .time_budget(Jiffies(10_000))
+        .seed(42)
+        .build();
 
-    anykv::Set::<usize>("heartbeats", 0);
-    anykv::Set::<usize>("pings_received", 0);
-    anykv::Set::<usize>("pongs_received", 0);
+    anykv::set::<usize>("heartbeats", 0);
+    anykv::set::<usize>("pings_received", 0);
+    anykv::set::<usize>("pongs_received", 0);
 
     let start = Instant::now();
-    sim.Run();
+    sim.run();
     let elapsed = start.elapsed();
 
-    let heartbeats = anykv::Get::<usize>("heartbeats");
-    let pings = anykv::Get::<usize>("pings_received");
-    let pongs = anykv::Get::<usize>("pongs_received");
+    let heartbeats = anykv::get::<usize>("heartbeats");
+    let pings = anykv::get::<usize>("pings_received");
+    let pongs = anykv::get::<usize>("pongs_received");
 
     println!();
     println!("Simulation completed in: {:?}", elapsed);

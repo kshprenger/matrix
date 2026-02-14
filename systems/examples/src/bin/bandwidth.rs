@@ -22,28 +22,28 @@ fn main() {
 }
 
 fn run_unbounded() -> usize {
-    anykv::Set::<usize>("messages_sent", 0);
-    anykv::Set::<usize>("messages_received", 0);
+    anykv::set::<usize>("messages_sent", 0);
+    anykv::set::<usize>("messages_received", 0);
 
-    let mut sim = SimulationBuilder::NewDefault()
-        .AddPool::<Sender>("Senders", 1)
-        .AddPool::<Receiver>("Receivers", 1)
-        .NICBandwidth(BandwidthDescription::Unbounded)
-        .LatencyTopology(&[LatencyDescription::BetweenPools(
+    let mut sim = SimulationBuilder::new_default()
+        .add_pool::<Sender>("Senders", 1)
+        .add_pool::<Receiver>("Receivers", 1)
+        .nic_bandwidth(BandwidthDescription::Unbounded)
+        .latency_topology(&[LatencyDescription::BetweenPools(
             "Senders",
             "Receivers",
             Distributions::Uniform(Jiffies(10), Jiffies(10)),
         )])
-        .TimeBudget(Jiffies(10_000))
-        .Seed(42)
-        .Build();
+        .time_budget(Jiffies(10_000))
+        .seed(42)
+        .build();
 
     let start = Instant::now();
-    sim.Run();
+    sim.run();
     let elapsed = start.elapsed();
 
-    let sent = anykv::Get::<usize>("messages_sent");
-    let received = anykv::Get::<usize>("messages_received");
+    let sent = anykv::get::<usize>("messages_sent");
+    let received = anykv::get::<usize>("messages_received");
     println!(
         "  Elapsed: {:?}, sent: {}, received: {}",
         elapsed, sent, received
@@ -53,39 +53,29 @@ fn run_unbounded() -> usize {
 }
 
 fn run_bounded() -> usize {
-    anykv::Set::<usize>("messages_sent", 0);
-    anykv::Set::<usize>("messages_received", 0);
+    anykv::set::<usize>("messages_sent", 0);
+    anykv::set::<usize>("messages_received", 0);
 
-    let mut sim = SimulationBuilder::NewDefault()
-        .AddPool::<Sender>("Senders", 1)
-        .AddPool::<Receiver>("Receivers", 1)
+    let mut sim = SimulationBuilder::new_default()
+        .add_pool::<Sender>("Senders", 1)
+        .add_pool::<Receiver>("Receivers", 1)
         // Very low bandwidth: 1 byte per jiffy (messages will queue up)
-        .NICBandwidth(BandwidthDescription::Bounded(1))
-        .LatencyTopology(&[
-            LatencyDescription::WithinPool(
-                "Senders",
-                Distributions::Uniform(Jiffies(1), Jiffies(1)),
-            ),
-            LatencyDescription::WithinPool(
-                "Receivers",
-                Distributions::Uniform(Jiffies(1), Jiffies(1)),
-            ),
-            LatencyDescription::BetweenPools(
-                "Senders",
-                "Receivers",
-                Distributions::Uniform(Jiffies(10), Jiffies(10)),
-            ),
-        ])
-        .TimeBudget(Jiffies(10_000))
-        .Seed(42)
-        .Build();
+        .nic_bandwidth(BandwidthDescription::Bounded(1))
+        .latency_topology(&[LatencyDescription::BetweenPools(
+            "Senders",
+            "Receivers",
+            Distributions::Uniform(Jiffies(10), Jiffies(10)),
+        )])
+        .time_budget(Jiffies(10_000))
+        .seed(42)
+        .build();
 
     let start = Instant::now();
-    sim.Run();
+    sim.run();
     let elapsed = start.elapsed();
 
-    let sent = anykv::Get::<usize>("messages_sent");
-    let received = anykv::Get::<usize>("messages_received");
+    let sent = anykv::get::<usize>("messages_sent");
+    let received = anykv::get::<usize>("messages_received");
     println!(
         "  Elapsed: {:?}, sent: {}, received: {}",
         elapsed, sent, received

@@ -4,7 +4,7 @@ use crate::{process::ProcessId, time::Jiffies};
 
 pub trait Message: Any {
     // In bytes
-    fn VirtualSize(&self) -> usize {
+    fn virtual_size(&self) -> usize {
         usize::default()
     }
 }
@@ -12,18 +12,18 @@ pub trait Message: Any {
 pub struct MessagePtr(pub Rc<dyn Message>);
 
 impl MessagePtr {
-    pub fn TryAs<T: 'static>(&self) -> Option<Rc<T>> {
+    pub fn try_as<T: 'static>(&self) -> Option<Rc<T>> {
         match (self.0.clone() as Rc<dyn Any>).downcast::<T>() {
             Err(_) => None,
             Ok(m) => Some(m),
         }
     }
 
-    pub fn Is<T: 'static>(&self) -> bool {
+    pub fn is<T: 'static>(&self) -> bool {
         (self.0.clone() as Rc<dyn Any>).is::<T>()
     }
 
-    pub fn As<T: 'static>(self) -> Rc<T> {
+    pub fn as_type<T: 'static>(self) -> Rc<T> {
         (self.0 as Rc<dyn Any>).downcast::<T>().unwrap()
     }
 }

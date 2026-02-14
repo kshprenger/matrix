@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 use dscale::{global::anykv, *};
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -13,25 +11,25 @@ impl Message for BroadcastMessage {}
 pub struct BroadcastProcess {}
 
 impl ProcessHandle for BroadcastProcess {
-    fn Start(&mut self) {
-        // Process with Rank 1 starts the broadcast
-        if Rank() == 1 {
-            ScheduleTimerAfter(Jiffies(100));
+    fn start(&mut self) {
+        // Process with rank 1 starts the broadcast
+        if rank() == 1 {
+            schedule_timer_after(Jiffies(100));
         }
     }
 
-    fn OnMessage(&mut self, from: ProcessId, message: MessagePtr) {
-        let msg = message.As::<BroadcastMessage>();
-        Debug!("Received broadcast from {}: data={}", from, msg.data);
+    fn on_message(&mut self, from: ProcessId, message: MessagePtr) {
+        let msg = message.as_type::<BroadcastMessage>();
+        debug_process!("Received broadcast from {}: data={}", from, msg.data);
 
         assert_eq!(msg.data, 42);
 
-        anykv::Modify::<usize>("broadcast_received", |x| *x += 1);
+        anykv::modify::<usize>("broadcast_received", |x| *x += 1);
     }
 
-    fn OnTimer(&mut self, _id: TimerId) {
-        Debug!("Broadcasting value 42");
-        Broadcast(BroadcastMessage { data: 42 });
-        ScheduleTimerAfter(Jiffies(100));
+    fn on_timer(&mut self, _id: TimerId) {
+        debug_process!("Broadcasting value 42");
+        broadcast(BroadcastMessage { data: 42 });
+        schedule_timer_after(Jiffies(100));
     }
 }

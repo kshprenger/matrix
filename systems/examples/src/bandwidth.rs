@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 use dscale::{global::anykv, *};
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -8,7 +6,7 @@ pub struct DataMessage {
 }
 
 impl Message for DataMessage {
-    fn VirtualSize(&self) -> usize {
+    fn virtual_size(&self) -> usize {
         1000
     }
 }
@@ -17,19 +15,19 @@ impl Message for DataMessage {
 pub struct Sender {}
 
 impl ProcessHandle for Sender {
-    fn Start(&mut self) {
+    fn start(&mut self) {
         // Start sending immediately
-        ScheduleTimerAfter(Jiffies(1));
+        schedule_timer_after(Jiffies(1));
     }
 
-    fn OnMessage(&mut self, _from: ProcessId, _message: MessagePtr) {
+    fn on_message(&mut self, _from: ProcessId, _message: MessagePtr) {
         // Sender doesn't receive messages
     }
 
-    fn OnTimer(&mut self, _id: TimerId) {
-        SendTo(2, DataMessage { real_payload: 42 });
-        anykv::Modify::<usize>("messages_sent", |x| *x += 1);
-        ScheduleTimerAfter(Jiffies(1));
+    fn on_timer(&mut self, _id: TimerId) {
+        send_to(2, DataMessage { real_payload: 42 });
+        anykv::modify::<usize>("messages_sent", |x| *x += 1);
+        schedule_timer_after(Jiffies(1));
     }
 }
 
@@ -37,12 +35,12 @@ impl ProcessHandle for Sender {
 pub struct Receiver {}
 
 impl ProcessHandle for Receiver {
-    fn Start(&mut self) {}
+    fn start(&mut self) {}
 
-    fn OnMessage(&mut self, _from: ProcessId, message: MessagePtr) {
-        let _ = message.As::<DataMessage>();
-        anykv::Modify::<usize>("messages_received", |x| *x += 1);
+    fn on_message(&mut self, _from: ProcessId, message: MessagePtr) {
+        let _ = message.as_type::<DataMessage>();
+        anykv::modify::<usize>("messages_received", |x| *x += 1);
     }
 
-    fn OnTimer(&mut self, _id: TimerId) {}
+    fn on_timer(&mut self, _id: TimerId) {}
 }

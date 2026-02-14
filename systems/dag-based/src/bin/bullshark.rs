@@ -18,29 +18,29 @@ fn main() {
         let seeds = [4567898765, 33333, 982039];
 
         seeds.into_par_iter().for_each(|seed| {
-            anykv::Set::<(f64, usize)>("avg_latency", (0.0, 0));
+            anykv::set::<(f64, usize)>("avg_latency", (0.0, 0));
 
-            let mut sim = SimulationBuilder::NewDefault()
-                .AddPool::<Bullshark>("Validators", k_validators)
-                .LatencyTopology(&[LatencyDescription::WithinPool(
+            let mut sim = SimulationBuilder::new_default()
+                .add_pool::<Bullshark>("Validators", k_validators)
+                .latency_topology(&[LatencyDescription::WithinPool(
                     "Validators",
                     Distributions::Normal(Jiffies(50), Jiffies(10)),
                 )])
-                .TimeBudget(Jiffies(60_000)) // Simulating 1 min of real time execution
-                .NICBandwidth(BandwidthDescription::Bounded(
+                .time_budget(Jiffies(60_000)) // Simulating 1 min of real time execution
+                .nic_bandwidth(BandwidthDescription::Bounded(
                     bandwidth * 1024 * 1024 / (8 * 1000), // bandwidth Mb/sec NICs
                 ))
-                .Seed(seed)
-                .Build();
+                .seed(seed)
+                .build();
 
             // (avg_latency, total_vertex)
-            anykv::Set::<(f64, usize)>("avg_latency", (0.0, 0));
+            anykv::set::<(f64, usize)>("avg_latency", (0.0, 0));
 
-            sim.Run();
+            sim.run();
 
-            let ordered = anykv::Get::<(f64, usize)>("avg_latency").1;
-            let avg_latency = anykv::Get::<(f64, usize)>("avg_latency").0;
-            let load = anykv::Get::<usize>("avg_network_load"); // Bytes per jiffy at single NIC
+            let ordered = anykv::get::<(f64, usize)>("avg_latency").1;
+            let avg_latency = anykv::get::<(f64, usize)>("avg_latency").0;
+            let load = anykv::get::<usize>("avg_network_load"); // Bytes per jiffy at single NIC
 
             writeln!(file.lock().unwrap(), "{} {} {}", ordered, avg_latency, load).unwrap();
         });

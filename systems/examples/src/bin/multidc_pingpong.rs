@@ -4,11 +4,11 @@ use dscale::{global::anykv, *};
 use examples::multidc_pingpong::{PingProcess, PongProcess};
 
 fn main() {
-    let mut sim = SimulationBuilder::NewDefault()
-        .AddPool::<PingProcess>("Pingers", 3)
-        .AddPool::<PongProcess>("Pongers", 2)
-        .NICBandwidth(BandwidthDescription::Unbounded)
-        .LatencyTopology(&[
+    let mut sim = SimulationBuilder::new_default()
+        .add_pool::<PingProcess>("Pingers", 3)
+        .add_pool::<PongProcess>("Pongers", 2)
+        .nic_bandwidth(BandwidthDescription::Unbounded)
+        .latency_topology(&[
             LatencyDescription::WithinPool(
                 "Pingers",
                 Distributions::Uniform(Jiffies(0), Jiffies(10)),
@@ -23,19 +23,19 @@ fn main() {
                 Distributions::Uniform(Jiffies(10), Jiffies(20)),
             ),
         ])
-        .TimeBudget(Jiffies(100_000))
-        .Seed(5)
-        .Build();
+        .time_budget(Jiffies(100_000))
+        .seed(5)
+        .build();
 
-    anykv::Set::<usize>("pings", 0);
-    anykv::Set::<usize>("pongs", 0);
+    anykv::set::<usize>("pings", 0);
+    anykv::set::<usize>("pongs", 0);
 
     let start = Instant::now();
-    sim.Run();
+    sim.run();
     let elapsed = start.elapsed();
 
-    let pings = anykv::Get::<usize>("pings");
-    let pongs = anykv::Get::<usize>("pongs");
+    let pings = anykv::get::<usize>("pings");
+    let pongs = anykv::get::<usize>("pongs");
 
     println!(
         "Done, elapsed: {:?}. Pings sent: {}, Pongs sent: {}",

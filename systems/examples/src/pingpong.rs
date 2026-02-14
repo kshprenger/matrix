@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 use dscale::{global::anykv, *};
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
@@ -14,31 +12,31 @@ impl Message for PingPongMessage {}
 pub struct PingPongProcess {}
 
 impl ProcessHandle for PingPongProcess {
-    fn Start(&mut self) {
-        if Rank() == 1 {
-            SendTo(2, PingPongMessage::Ping);
+    fn start(&mut self) {
+        if rank() == 1 {
+            send_to(2, PingPongMessage::Ping);
         }
     }
 
-    fn OnMessage(&mut self, from: ProcessId, message: MessagePtr) {
-        let m = message.As::<PingPongMessage>();
+    fn on_message(&mut self, from: ProcessId, message: MessagePtr) {
+        let m = message.as_type::<PingPongMessage>();
 
-        if from == 1 && Rank() == 2 {
+        if from == 1 && rank() == 2 {
             assert!(*m == PingPongMessage::Ping);
-            Debug!("Sending Pong");
-            anykv::Modify::<usize>("pongs", |p| *p += 1);
-            SendTo(1, PingPongMessage::Pong);
+            debug_process!("Sending Pong");
+            anykv::modify::<usize>("pongs", |p| *p += 1);
+            send_to(1, PingPongMessage::Pong);
             return;
         }
 
-        if from == 2 && Rank() == 1 {
+        if from == 2 && rank() == 1 {
             assert!(*m == PingPongMessage::Pong);
-            Debug!("Sending Ping");
-            anykv::Modify::<usize>("pings", |p| *p += 1);
-            SendTo(2, PingPongMessage::Ping);
+            debug_process!("Sending Ping");
+            anykv::modify::<usize>("pings", |p| *p += 1);
+            send_to(2, PingPongMessage::Ping);
             return;
         }
     }
 
-    fn OnTimer(&mut self, _id: TimerId) {}
+    fn on_timer(&mut self, _id: TimerId) {}
 }

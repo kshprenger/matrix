@@ -23,32 +23,32 @@ fn main() {
         let product = samples.flat_map(|x| seeds.iter().map(move |y| (x, y)));
 
         product.par_bridge().into_par_iter().for_each(|(d, seed)| {
-            anykv::Set::<(f64, usize)>("avg_latency", (0.0, 0));
-            anykv::Set::<(f64, usize)>("avg_virtual_size", (0.0, 0));
-            anykv::Set::<usize>("D", d); // Sample size
+            anykv::set::<(f64, usize)>("avg_latency", (0.0, 0));
+            anykv::set::<(f64, usize)>("avg_virtual_size", (0.0, 0));
+            anykv::set::<usize>("D", d); // Sample size
 
-            let mut sim = SimulationBuilder::NewDefault()
-                .AddPool::<SparseBullshark>("Validators", k_validators)
-                .LatencyTopology(&[LatencyDescription::WithinPool(
+            let mut sim = SimulationBuilder::new_default()
+                .add_pool::<SparseBullshark>("Validators", k_validators)
+                .latency_topology(&[LatencyDescription::WithinPool(
                     "Validators",
                     Distributions::Normal(Jiffies(50), Jiffies(10)),
                 )])
-                .TimeBudget(Jiffies(60_000)) // Simulating 1 min of real time execution
-                .NICBandwidth(BandwidthDescription::Bounded(
+                .time_budget(Jiffies(60_000)) // Simulating 1 min of real time execution
+                .nic_bandwidth(BandwidthDescription::Bounded(
                     bandwidth * 1024 * 1024 / (8 * 1000), // bandwidth Mb/sec NICs
                 ))
-                .Seed(*seed)
-                .Build();
+                .seed(*seed)
+                .build();
 
             // (avg_latency, total_vertex)
-            anykv::Set::<(f64, usize)>("avg_latency", (0.0, 0));
+            anykv::set::<(f64, usize)>("avg_latency", (0.0, 0));
 
-            sim.Run();
+            sim.run();
 
-            let ordered = anykv::Get::<(f64, usize)>("avg_latency").1;
-            let avg_latency = anykv::Get::<(f64, usize)>("avg_latency").0;
-            let load = anykv::Get::<usize>("avg_network_load"); // Bytes per jiffy at single NIC
-            let avg_virtual_size_of_message = anykv::Get::<(f64, usize)>("avg_virtual_size");
+            let ordered = anykv::get::<(f64, usize)>("avg_latency").1;
+            let avg_latency = anykv::get::<(f64, usize)>("avg_latency").0;
+            let load = anykv::get::<usize>("avg_network_load"); // Bytes per jiffy at single NIC
+            let avg_virtual_size_of_message = anykv::get::<(f64, usize)>("avg_virtual_size");
 
             writeln!(
                 file.lock().unwrap(),

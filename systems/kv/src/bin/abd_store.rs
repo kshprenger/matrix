@@ -2,17 +2,17 @@ use dscale::{global::anykv, *};
 use kv::abd_store::{
     Replica,
     client::{Client, ExecutionHistory},
-    lin_checker::CheckLinearizable,
+    lin_checker::check_linearizable,
     types::{CLIENT_POOL_NAME, REPLICA_POOL_NAME},
 };
 
 fn main() {
     // 1 jiffy == 1ms
-    let mut sim = SimulationBuilder::NewDefault()
-        .AddPool::<Replica>(REPLICA_POOL_NAME, 10)
-        .AddPool::<Client>(CLIENT_POOL_NAME, 4)
-        .TimeBudget(Jiffies(5000))
-        .LatencyTopology(&[
+    let mut sim = SimulationBuilder::new_default()
+        .add_pool::<Replica>(REPLICA_POOL_NAME, 10)
+        .add_pool::<Client>(CLIENT_POOL_NAME, 4)
+        .time_budget(Jiffies(5000))
+        .latency_topology(&[
             LatencyDescription::WithinPool(
                 REPLICA_POOL_NAME,
                 Distributions::Uniform(Jiffies(0), Jiffies(10)),
@@ -27,12 +27,12 @@ fn main() {
                 Distributions::Uniform(Jiffies(0), Jiffies(1212)),
             ),
         ])
-        .Seed(5444)
-        .Build();
+        .seed(5444)
+        .build();
 
-    anykv::Set::<ExecutionHistory>("linearizable_history", ExecutionHistory::new());
+    anykv::set::<ExecutionHistory>("linearizable_history", ExecutionHistory::new());
 
-    sim.Run();
+    sim.run();
 
     println!(
         "{:<8} | {:<12} | {:<8} | {:<12} | {:<12}",
@@ -40,9 +40,9 @@ fn main() {
     );
     println!("{}", "-".repeat(75));
 
-    let history = anykv::Get::<ExecutionHistory>("linearizable_history");
+    let history = anykv::get::<ExecutionHistory>("linearizable_history");
 
-    for el in anykv::Get::<ExecutionHistory>("linearizable_history") {
+    for el in anykv::get::<ExecutionHistory>("linearizable_history") {
         let result = el
             .result
             .map(|v| v.to_string())
@@ -53,5 +53,5 @@ fn main() {
         );
     }
 
-    assert!(CheckLinearizable(&history));
+    assert!(check_linearizable(&history));
 }

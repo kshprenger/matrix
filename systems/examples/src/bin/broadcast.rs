@@ -4,24 +4,24 @@ use dscale::{global::anykv, *};
 use examples::broadcast::BroadcastProcess;
 
 fn main() {
-    anykv::Set::<usize>("broadcast_received", 0);
+    anykv::set::<usize>("broadcast_received", 0);
 
-    let mut sim = SimulationBuilder::NewDefault()
-        .AddPool::<BroadcastProcess>("BroadcastPool", 5)
-        .NICBandwidth(BandwidthDescription::Unbounded)
-        .LatencyTopology(&[LatencyDescription::WithinPool(
+    let mut sim = SimulationBuilder::new_default()
+        .add_pool::<BroadcastProcess>("BroadcastPool", 5)
+        .nic_bandwidth(BandwidthDescription::Unbounded)
+        .latency_topology(&[LatencyDescription::WithinPool(
             "BroadcastPool",
             Distributions::Uniform(Jiffies(0), Jiffies(10)),
         )])
-        .TimeBudget(Jiffies(100_0000))
-        .Seed(123)
-        .Build();
+        .time_budget(Jiffies(100_0000))
+        .seed(123)
+        .build();
 
     let start = Instant::now();
-    sim.Run();
+    sim.run();
     let elapsed = start.elapsed();
 
-    let received_count = anykv::Get::<usize>("broadcast_received");
+    let received_count = anykv::get::<usize>("broadcast_received");
     println!(
         "Done, elapsed: {:?}. Broadcast messages received: {}",
         elapsed, received_count

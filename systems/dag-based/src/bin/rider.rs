@@ -5,22 +5,22 @@ use dscale::{
 };
 
 fn main() {
-    let mut sim = SimulationBuilder::NewDefault()
-        .AddPool::<DAGRider>("Validators", 53)
-        .LatencyTopology(&[LatencyDescription::WithinPool(
+    let mut sim = SimulationBuilder::new_default()
+        .add_pool::<DAGRider>("Validators", 53)
+        .latency_topology(&[LatencyDescription::WithinPool(
             "Validators",
             Distributions::Normal(Jiffies(50), Jiffies(10)),
         )])
-        .TimeBudget(Jiffies(3600_000))
-        .NICBandwidth(BandwidthDescription::Unbounded)
-        .Seed(123)
-        .Build();
+        .time_budget(Jiffies(3600_000))
+        .nic_bandwidth(BandwidthDescription::Unbounded)
+        .seed(123)
+        .build();
 
-    anykv::Set::<(f64, usize)>("avg_latency", (0.0, 0));
+    anykv::set::<(f64, usize)>("avg_latency", (0.0, 0));
 
-    sim.Run();
+    sim.run();
 
-    let ordered = anykv::Get::<(f64, usize)>("avg_latency").1;
-    let avg_latency = anykv::Get::<(f64, usize)>("avg_latency").0;
+    let ordered = anykv::get::<(f64, usize)>("avg_latency").1;
+    let avg_latency = anykv::get::<(f64, usize)>("avg_latency").0;
     println!("ordered: {ordered}, avg_latency: {avg_latency}")
 }

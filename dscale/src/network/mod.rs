@@ -12,7 +12,6 @@ use log::debug;
 use crate::Destination;
 use crate::Message;
 use crate::MessagePtr;
-use crate::Now;
 use crate::ProcessId;
 use crate::actor::EventSubmitter;
 use crate::actor::SimulationActor;
@@ -20,6 +19,7 @@ use crate::communication::DScaleMessage;
 use crate::communication::ProcessStep;
 use crate::communication::RoutedMessage;
 use crate::global::configuration;
+use crate::now;
 use crate::nursery::Nursery;
 use crate::random::Randomizer;
 use crate::random::Seed;
@@ -36,16 +36,16 @@ pub(crate) struct Network {
 }
 
 impl Network {
-    fn SubmitSingleMessage(
+    fn submit_single_message(
         &mut self,
         message: Rc<dyn Message>,
         source: ProcessId,
         destination: Destination,
     ) {
         let targets = match destination {
-            Destination::Broadcast => self.nursery.Keys().copied().collect::<Vec<ProcessId>>(),
+            Destination::Broadcast => self.nursery.keys().copied().collect::<Vec<ProcessId>>(),
             Destination::BroadcastWithinPool(pool_name) => {
-                self.topology.ListPool(pool_name).to_vec()
+                self.topology.list_pool(pool_name).to_vec()
             }
             Destination::To(to) => vec![to],
         };
@@ -54,23 +54,23 @@ impl Network {
 
         targets.into_iter().for_each(|target| {
             let routed_message = RoutedMessage {
-                arrival_time: Now() + Jiffies(1), // Without any latency message will arrive on next timepoint;
+                arrival_time: now() + Jiffies(1), // Without any latency message will arrive on next timepoint;
                 step: ProcessStep {
                     source,
                     dest: target,
                     message: message.clone(),
                 },
             };
-            self.bandwidth_queue.Push(routed_message);
+            self.bandwidth_queue.push(routed_message);
         });
     }
 
-    fn ExecuteProcessStep(&mut self, step: ProcessStep) {
+    fn execute_process_step(&mut self, step: ProcessStep) {
         let source = step.source;
         let dest = step.dest;
         let message = step.message;
 
-        self.nursery.Deliver(
+        self.nursery.deliver(
             source,
             dest,
             DScaleMessage::NetworkMessage(MessagePtr(message)),
@@ -79,7 +79,7 @@ impl Network {
 }
 
 impl Network {
-    pub(crate) fn New(
+    pub(crate) fn new(
         seed: Seed,
         bandwidth_type: BandwidthDescription,
         topology: Rc<Topology>,
@@ -87,10 +87,10 @@ impl Network {
     ) -> Self {
         Self {
             seed,
-            bandwidth_queue: BandwidthQueue::New(
+            bandwidth_queue: BandwidthQueue::new(
                 bandwidth_type,
-                nursery.Size(),
-                LatencyQueue::New(Randomizer::New(seed), topology.clone()),
+                nursery.size(),
+                LatencyQueue::new(Randomizer::new(seed), topology.clone()),
             ),
             topology,
             nursery,
@@ -99,35 +99,35 @@ impl Network {
 }
 
 impl SimulationActor for Network {
-    fn Start(&mut self) {
-        self.nursery.Keys().for_each(|id| {
-            configuration::SetupLocalConfiguration(*id, self.seed);
-            self.nursery.StartSingle(*id);
+    fn start(&mut self) {
+        self.nursery.keys().for_each(|id| {
+            configuration::setup_local_configuration(*id, self.seed);
+            self.nursery.start_single(*id);
         });
     }
 
-    fn Step(&mut self) {
-        let next_event = self.bandwidth_queue.Pop();
+    fn step(&mut self) {
+        let next_event = self.bandwidth_queue.pop();
 
         match next_event {
             None => {}
             Some(message) => {
-                self.ExecuteProcessStep(message.step);
+                self.execute_process_step(message.step);
             }
         }
     }
 
-    fn PeekClosest(&self) -> Option<Jiffies> {
-        self.bandwidth_queue.PeekClosest()
+    fn peek_closest(&self) -> Option<Jiffies> {
+        self.bandwidth_queue.peek_closest()
     }
 }
 
 impl EventSubmitter for Network {
     type Event = (ProcessId, Destination, Rc<dyn Message>);
 
-    fn Submit(&mut self, events: &mut Vec<Self::Event>) {
+    fn submit(&mut self, events: &mut Vec<Self::Event>) {
         events.drain(..).for_each(|(from, destination, message)| {
-            self.SubmitSingleMessage(message, from, destination);
+            self.submit_single_message(message, from, destination);
         });
     }
 }

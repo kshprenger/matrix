@@ -17,13 +17,13 @@ pub struct Randomizer {
 }
 
 impl Randomizer {
-    pub fn New(seed: Seed) -> Self {
+    pub fn new(seed: Seed) -> Self {
         Self {
             rnd: rand::rngs::StdRng::seed_from_u64(seed),
         }
     }
 
-    pub fn RandomUsize(&mut self, d: Distributions) -> usize {
+    pub fn random_usize(&mut self, d: Distributions) -> usize {
         match d {
             Distributions::Uniform(Jiffies(from), Jiffies(to)) => {
                 let distr = Uniform::new_inclusive(from, to).expect("Invalid bounds");
@@ -40,7 +40,7 @@ impl Randomizer {
         }
     }
 
-    pub fn ChooseFromSlice<'a, T: Copy>(&mut self, from: &[T]) -> T {
+    pub fn choose_from_slice<'a, T: Copy>(&mut self, from: &[T]) -> T {
         from.choose(&mut self.rnd)
             .copied()
             .expect("Chose from empty slice")
