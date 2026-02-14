@@ -1,13 +1,13 @@
 use std::usize;
 
-/// Userspace quorum gathering.
-/// Quorum size is passed in compile time so compiler can place quorum on the stack.
-pub struct Quorum<T: Sized, const K: usize> {
+/// Multiple value gathering (fors example for quorums).
+/// Combiner size is passed in compile time so compiler can place quorum on the stack.
+pub struct Combiner<T: Sized, const K: usize> {
     quorum: [Option<T>; K],
     idx: usize,
 }
 
-impl<T: Sized, const K: usize> Quorum<T, K> {
+impl<T: Sized, const K: usize> Combiner<T, K> {
     /// Constructs new quorum object
     pub fn new() -> Self {
         debug_assert!(K > 0, "Quorum threshold should be greater than zero");

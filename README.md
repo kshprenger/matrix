@@ -136,9 +136,10 @@ Useful for passing shared state, metrics, or configuration between processes or 
 - **`set<T>(&str, T)`**
 - **`modify<T>(&str, impl FnOnce(&mut T))`**: Modify in-place.
 
-### Logging & Debugging
+### Helpers (`dscale::helpers`)
 
 - **`debug_process!(fmt, ...)`**: A macro that automatically prepends current simulation time and process ID.
+- **`Combiner`**: Structure which allows combining any values up to some known threshols. Can be useful for waiting for quorums.
 
 ## Logging Configuration (`RUST_LOG`)
 
