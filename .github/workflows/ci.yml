@@ -49,5 +49,3 @@ jobs:
 
       - name: Verify DScale
         run: cargo run --bin ${{ matrix.binary }} --release --package examples
-        env:
-          RUST_LOG: info
