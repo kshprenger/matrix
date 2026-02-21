@@ -1,8 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 
+use crate::now;
+
 use crate::{
     Destination, Message, ProcessId,
     actor::EventSubmitter,
+    debug_process,
     network::NetworkActor,
     random::Randomizer,
     time::{
@@ -144,22 +147,27 @@ pub(crate) fn schedule() {
 }
 
 pub fn schedule_timer_after(after: Jiffies) -> TimerId {
+    debug_process!("Access: scheduling timer after {after}");
     with_access(|access| access.schedule_timer_after(after))
 }
 
 pub fn broadcast(message: impl Message + 'static) {
+    debug_process!("Access: broadcasting globally");
     with_access(|access| access.broadcast(message));
 }
 
 pub fn broadcast_within_pool(pool: &'static str, message: impl Message + 'static) {
+    debug_process!("Access: broadcasting within: {pool}");
     with_access(|access| access.broadcast_within_pool(pool, message));
 }
 
 pub fn send_to(to: ProcessId, message: impl Message + 'static) {
+    debug_process!("Access: send to: {to}");
     with_access(|access| access.send_to(to, message));
 }
 
 pub fn send_random_from_pool(pool: &'static str, message: impl Message + 'static) {
+    debug_process!("Access: sending random from pool: {}", pool);
     with_access(|access| access.send_random_from_pool(pool, message));
 }
 
@@ -168,9 +176,11 @@ pub fn rank() -> ProcessId {
 }
 
 pub fn list_pool(name: &str) -> Vec<ProcessId> {
+    debug_process!("Access: listing pool: {name}");
     with_access(|access| access.list_pool(name).to_vec())
 }
 
 pub fn choose_from_pool(name: &str) -> ProcessId {
+    debug_process!("Access: choosing random from pool: {name}");
     with_access(|access| access.choose_from_pool(name))
 }
