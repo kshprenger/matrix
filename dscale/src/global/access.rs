@@ -68,14 +68,6 @@ impl SimulationAccess {
         ));
     }
 
-    fn broadcast(&mut self, message: impl Message + 'static) {
-        self.scheduled_messages.push((
-            self.process_on_execution,
-            Destination::BroadcastWithinPool(GLOBAL_POOL),
-            Rc::new(message),
-        ));
-    }
-
     fn send_to(&mut self, to: ProcessId, message: impl Message + 'static) {
         self.scheduled_messages.push((
             self.process_on_execution,
@@ -153,7 +145,7 @@ pub fn schedule_timer_after(after: Jiffies) -> TimerId {
 
 pub fn broadcast(message: impl Message + 'static) {
     debug_process!("Access: broadcasting globally");
-    with_access(|access| access.broadcast(message));
+    with_access(|access| access.broadcast_within_pool(GLOBAL_POOL, message));
 }
 
 pub fn broadcast_within_pool(pool: &'static str, message: impl Message + 'static) {
@@ -166,8 +158,13 @@ pub fn send_to(to: ProcessId, message: impl Message + 'static) {
     with_access(|access| access.send_to(to, message));
 }
 
+pub fn send_random(message: impl Message + 'static) {
+    debug_process!("Access: sending random in GLOBAL_POOL");
+    with_access(|access| access.send_random_from_pool(GLOBAL_POOL, message));
+}
+
 pub fn send_random_from_pool(pool: &'static str, message: impl Message + 'static) {
-    debug_process!("Access: sending random from pool: {}", pool);
+    debug_process!("Access: sending random from pool: {pool}");
     with_access(|access| access.send_random_from_pool(pool, message));
 }
 

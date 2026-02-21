@@ -123,7 +123,8 @@ These functions are available globally but must be called within the context of 
 - **`broadcasst`**: Sends a message to all other processes. (GLOBAL_POOL)
 - **`broadcasst_within_pool`**: Sends a message to all other processes within a specific pool.
 - **`send_to`**: Sends a message to a specific process.
-- **`send_random_from_pool`**: Sends a message to random process whithin pool.
+- **`send_random`**: Sends a message to random process. (from GLOBAL_POOL)
+- **`send_random_from_pool`**: Sends a message to random process within specific pool.
 - **`schedule_timer_after`**: Schedules a timer interrupt for the current process.
 - **`rank`**: Returns the ID of the currently executing process.
 - **`now`**: Returns current simulation time.

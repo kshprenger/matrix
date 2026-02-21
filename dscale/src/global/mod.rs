@@ -14,6 +14,7 @@ pub use access::choose_from_pool;
 pub use access::list_pool;
 pub use access::rank;
 pub use access::schedule_timer_after;
+pub use access::send_random;
 pub use access::send_random_from_pool;
 pub use access::send_to;
 
