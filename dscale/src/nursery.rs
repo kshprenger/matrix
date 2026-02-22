@@ -6,7 +6,8 @@ use std::{
 use log::debug;
 
 use crate::{
-    ProcessId, communication::DScaleMessage, global::set_process, process::MutableProcessHandle,
+    ProcessId, dscale_message::DScaleMessage, global::set_process,
+    process_handle::MutableProcessHandle,
 };
 
 pub(crate) type HandlerMap = BTreeMap<ProcessId, MutableProcessHandle>; // btree for deterministic iterators

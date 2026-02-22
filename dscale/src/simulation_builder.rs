@@ -14,7 +14,7 @@ use std::{
 use crate::{
     ProcessHandle, ProcessId, Simulation,
     network::BandwidthDescription,
-    process::MutableProcessHandle,
+    process_handle::MutableProcessHandle,
     random::Seed,
     time::Jiffies,
     topology::{GLOBAL_POOL, LatencyDescription, LatencyTopology},

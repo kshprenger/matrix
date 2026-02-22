@@ -1,9 +1,10 @@
 use std::{cell::RefCell, rc::Rc};
 
+use crate::destination::Destination;
 use crate::now;
 
 use crate::{
-    Destination, Message, ProcessId,
+    Message, ProcessId,
     actor::EventSubmitter,
     debug_process,
     network::NetworkActor,

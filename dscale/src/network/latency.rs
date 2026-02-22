@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use log::debug;
 
-use crate::communication::{RoutedMessage, TimePriorityMessageQueue};
+use crate::message::{RoutedMessage, TimePriorityMessageQueue};
 use crate::random::Randomizer;
 use crate::topology::Topology;
 

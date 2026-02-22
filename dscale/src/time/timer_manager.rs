@@ -11,7 +11,7 @@ use log::debug;
 use crate::{
     ProcessId,
     actor::{EventSubmitter, SimulationActor},
-    communication::DScaleMessage,
+    dscale_message::DScaleMessage,
     global, now,
     nursery::Nursery,
     time::Jiffies,

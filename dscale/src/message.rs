@@ -7,7 +7,7 @@
 
 use std::{any::Any, cmp::Reverse, collections::BinaryHeap, rc::Rc};
 
-use crate::{process::ProcessId, time::Jiffies};
+use crate::{process_handle::ProcessId, time::Jiffies};
 
 /// Core trait for all message types in DScale simulations.
 ///

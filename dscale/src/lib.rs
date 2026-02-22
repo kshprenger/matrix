@@ -1,11 +1,13 @@
 mod actor;
 mod alloc;
-mod communication;
+mod destination;
+mod dscale_message;
 pub mod global;
 pub mod helpers;
+pub mod message;
 mod network;
 mod nursery;
-mod process;
+mod process_handle;
 mod progress;
 mod random;
 mod simulation;
@@ -13,11 +15,11 @@ mod simulation_builder;
 pub mod time;
 mod topology;
 
-pub use communication::MessagePtr;
-pub use communication::{Destination, Message};
+pub use message::Message;
+pub use message::MessagePtr;
 
-pub use process::ProcessHandle;
-pub use process::ProcessId;
+pub use process_handle::ProcessHandle;
+pub use process_handle::ProcessId;
 
 pub use simulation::Simulation;
 pub use simulation_builder::SimulationBuilder;

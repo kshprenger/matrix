@@ -10,7 +10,7 @@ use std::collections::BinaryHeap;
 use log::debug;
 
 use crate::{
-    communication::{RoutedMessage, TimePriorityMessageQueue},
+    message::{RoutedMessage, TimePriorityMessageQueue},
     network::LatencyQueue,
     now,
     time::Jiffies,
