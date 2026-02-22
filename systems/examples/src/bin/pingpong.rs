@@ -28,4 +28,10 @@ fn main() {
         anykv::get::<usize>("pings"),
         anykv::get::<usize>("pongs"),
     );
+
+    println!(
+        "Steps/sec {:.2}",
+        (anykv::get::<usize>("pings") + anykv::get::<usize>("pongs")) as f64
+            / elapsed.as_secs_f64()
+    );
 }

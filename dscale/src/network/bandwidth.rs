@@ -318,18 +318,14 @@ impl BandwidthQueue {
             .pop()
             .expect("Global queue should not be empty");
 
-        if self.bandwidth == usize::MAX {
-            self.merged_fifo_buffers.push(std::cmp::Reverse(message));
-        } else {
-            let new_total =
-                self.total_pased[message.step.dest] + message.step.message.virtual_size();
+        // Only for bounded bandwidth - unbounded case is handled directly in deliver_from_latency_queue
+        let new_total = self.total_pased[message.step.dest] + message.step.message.virtual_size();
 
-            if new_total > now().0 * self.bandwidth {
-                message.arrival_time = Jiffies(new_total / self.bandwidth); // > now()
-            }
-
-            self.merged_fifo_buffers.push(std::cmp::Reverse(message));
+        if new_total > now().0 * self.bandwidth {
+            message.arrival_time = Jiffies(new_total / self.bandwidth); // > now()
         }
+
+        self.merged_fifo_buffers.push(std::cmp::Reverse(message));
     }
 
     fn deliver_from_buffer(&mut self) -> Option<RoutedMessage> {
@@ -343,7 +339,18 @@ impl BandwidthQueue {
     }
 
     fn deliver_from_latency_queue(&mut self) -> Option<RoutedMessage> {
-        self.move_message_from_latency_queue_to_buffers();
-        None
+        if self.bandwidth == usize::MAX {
+            // For unbounded bandwidth, deliver directly from latency queue
+            // (Fast-Path)
+            let message = self
+                .global_queue
+                .pop()
+                .expect("Global queue should not be empty");
+            Some(message)
+        } else {
+            // For bounded bandwidth, move to buffers first
+            self.move_message_from_latency_queue_to_buffers();
+            None
+        }
     }
 }
